@@ -6,6 +6,25 @@ frontend/node_modules/
 # Ignore build files
 dist/
 build/
+frontend/build/
 
 # Ignore environment files
 .env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# Ignore testing files
+coverage/
+frontend/coverage/
+
+# Ignore Mac system files
+.DS_Store
+
+# Ignore misc files
+.pnp
+.pnp.js
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
