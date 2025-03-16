@@ -1,9 +1,7 @@
 import { Express } from "express";
-
+const UserRouter = require("./UserRouter");
 const routes = (app: Express) => {
-    app.get('/api/user', (req, res) => {
-        res.send('User page');
-    })
+    app.use('/api/users', UserRouter);
  
 };
-export default routes;
+module.exports = routes;
