@@ -1,39 +1,35 @@
 
 import User from '../models/UserModel';
+import { genneralAccessToken, genneralRefreshToken } from './JwtService';
+const bcrypt = require('bcrypt');
 const createUser = (newUser: any) =>{
     return new Promise(async (resolve, reject) => {
         const {username,email,password,phone} = newUser;
         try {
             const checkAlreadyEmail = await User.findOne({email: email})
             if(checkAlreadyEmail !== null){
-                resolve({
+                return resolve({
                     status: 'OK',
                     message: 'The email is already in the database'
                 })
             }
             const checkAlreadyPhone = await User.findOne({phone: phone})
             if(checkAlreadyPhone !== null){
-                resolve({
+                return resolve({
                     status: 'OK',
                     message: 'The phone is already in the database'
                 })
             }
-            const checkAlreadyUsername = await User.findOne({username: username})
-            if(checkAlreadyUsername !== null){
-                resolve({
-                    status: 'OK',
-                    message: 'The phone is already in the database'
-                })
-            }
+            const passwordhash = bcrypt.hashSync(password,10);
             const createUser = await User.create({
                 username,
-                password,
+                password: passwordhash,
                 email,
                 phone
             })
             if(createUser)
             {
-                resolve(
+                return resolve(
                     {
                         status: 'success',
                         message: 'User created successfully',
@@ -47,4 +43,47 @@ const createUser = (newUser: any) =>{
         }
     })
 }
-module.exports = { createUser };
+const loginUser = (userLogin: any) => {
+    return new Promise(async (resolve,reject) =>
+    {
+        const {email,password} = userLogin;
+        try{
+            const checkUser = await User.findOne({email:email});
+            console.log(checkUser)
+
+            if(!checkUser)
+            {
+                return resolve(
+                    {
+                        status: 'Ok',
+                        message: 'Email not found'
+                    }
+                );
+            }
+            const comparePassword = bcrypt.compareSync(password,checkUser.password);
+            if(!comparePassword)
+            {
+                return resolve({status: 'OK',
+                    message: 'Invalid password'
+                });
+            }
+            const access_token = await genneralAccessToken({
+                id: checkUser.id
+            }); 
+            const refresh_token = await genneralRefreshToken({
+                id: checkUser.id
+            });
+            return resolve({
+                status: 'success',
+                message: 'User logged in successfully',
+                access_token
+            });
+        }
+        catch(e)
+        {
+            reject(e);
+        }
+    })
+}
+
+module.exports = { createUser,loginUser};
