@@ -1,8 +1,11 @@
+import { stat } from "fs";
+
 export const pathnames = {
     public: {
         layout: '/',
-        homepage: 'homepage',
+        homepage: '',
         dashboard: 'dashboard',
+        statistics: 'statistics',
     },
     // this use for login, user page
     private: {

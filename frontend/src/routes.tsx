@@ -1,7 +1,6 @@
-import path from 'path';
 import App from './App';
 import { pathnames } from './lib/pathname';
-import { HomePage, PublicLayout, DashBoard } from './pages/public';
+import { HomePage, PublicLayout, DashBoard, Statistics } from './pages/public';
 
 const routes = [
     {
@@ -19,8 +18,15 @@ const routes = [
                     {
                         path: pathnames.public.dashboard,
                         element: <DashBoard/>
+                    },
+                    {
+                        path: pathnames.public.statistics,
+                        element: <Statistics/>
                     }
                 ]
+            },
+            {
+                
             }
         ]
     }
