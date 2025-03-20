@@ -1,4 +1,4 @@
-
+const mongoose = require('mongoose');
 const actionDeviceSchema = new mongoose.Schema(
   {
     name:       { type: String, required: true },
@@ -12,4 +12,5 @@ const actionDeviceSchema = new mongoose.Schema(
 );
 
 const ActionDevice = mongoose.model('ActionDevice', actionDeviceSchema);
-module.exports = ActionDevice;
+export default ActionDevice;
+

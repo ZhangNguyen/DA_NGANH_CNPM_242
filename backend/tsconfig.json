@@ -6,6 +6,7 @@
     "outDir": "./dist",   // Xuất file biên dịch ra "./dist"
     "strict": true,
     "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "typeRoots": ["./src/types", "./node_modules/@types"]
   }
 }

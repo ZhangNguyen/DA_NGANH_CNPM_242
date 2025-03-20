@@ -1,10 +1,11 @@
+const mongoose = require('mongoose');
 const sensorSchema = new mongoose.Schema(
     {
-      name: { type: String, required: true },
+      name: { type: String, required: true, unique: true },
   
       type: {
         type: String,
-        enum: ['light', 'temperature', 'humidity'],
+        enum: ['light', 'temperature', 'humidity','soil'],
         required: true
       },
   
@@ -12,14 +13,8 @@ const sensorSchema = new mongoose.Schema(
         type: String,
         enum: ['active', 'inactive'],
         default: 'inactive'
-      },
-  
-      data: { type: Number},
-  
-      recordedAt: {  //  Thời gian sensor đo, lấy từ Adafruit IO 
-        type: Date,
-      },
-  
+      },  
+      newestdata: { type: Number},
       user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
     },
     { timestamps: true }  //  createdAt và updatedAt 

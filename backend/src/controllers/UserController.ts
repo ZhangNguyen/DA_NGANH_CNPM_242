@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 const JwtService = require("../middleware/authMiddleware");
 const UserService = require('../services/UserService');
+const User = require('../models/UserModel');
 const createUser = async(req: Request, res: Response) => {
     try {
         const {username, email, password,confirmPassword,phone} = req.body;
@@ -49,4 +50,25 @@ const refresh_token = async (req: Request, res: Response) => {
         return res.status(404).json({ message: error.message });
     }
 }
-module.exports = { createUser,loginUser,refresh_token };
+const getAdaFruitInfoController = async (req: Request, res: Response) =>
+{
+    try{
+        const result = await UserService.getAdaFruitInfo(req.user)
+        return res.status(200).json(result);
+    }
+    catch (error: any) {
+        return res.status(404).json({ message: error.message });
+    }
+}
+const updateAdaFruitInfoController = async (req: Request, res: Response) =>
+{
+    try{
+        const result = await UserService.updateAdaFruitInfo(req.user,req.body)
+        return res.status(200).json(result);
+    }
+    catch (error: any) {
+        return res.status(404).json({ message: error.message });
+    }
+}
+
+module.exports = { createUser,loginUser,refresh_token,getAdaFruitInfoController,updateAdaFruitInfoController };

@@ -86,4 +86,73 @@ const loginUser = (userLogin: any) => {
     })
 }
 
-module.exports = { createUser,loginUser};
+const getAdaFruitInfo = async(user:any) => {
+    return new Promise(async (resolve, reject) => {
+    try{
+        const result = await User.findOne({ _id: user.payload.id });
+        if(!result)
+            return resolve(
+            {
+                status: "Ok",
+                message: "No Userfound"
+            })
+        const adafruit_username = result.adafruit_username;
+        const adafruit_key = result.adafruit_key;
+        return resolve(
+            {
+                adafruit_username,
+                adafruit_key
+            }
+        )
+    }
+    catch(e)
+    {
+        throw new Error('St wrong');
+    }
+})
+}
+const updateAdaFruitInfo = async (user:any,data:any) => {
+    return new Promise(async (resolve, reject) => {
+    try {
+        const userId = user.payload.id; // Lấy user từ middleware decode JWT
+
+        const { adafruit_username, adafruit_key } = data;
+
+        // Kiểm tra dữ liệu đầu vào
+        if (!adafruit_username || !adafruit_key) {
+            return resolve({
+                status: 'error',
+                message: 'Adafruit username and key are required'
+            });
+        }
+
+        // Tìm user và update thông tin Adafruit
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            {
+                adafruit_username,
+                adafruit_key
+            },{ new: true }
+        );
+        if(!updatedUser) 
+        {
+            return resolve({
+                status: 'error',
+                message: 'Fail to update Adafruit'
+            });
+        }
+        return resolve({
+            status: 'success',
+            message: 'Adafruit info updated successfully',
+        });
+    }
+    catch(error: any)
+    {
+        reject({
+            status: 'error',
+            message: error.message || 'Internal server error'
+        });
+    }
+})
+}
+module.exports = { createUser,loginUser,getAdaFruitInfo,updateAdaFruitInfo};

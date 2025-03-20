@@ -6,7 +6,7 @@ const genneralAccessToken = async(payload: any) =>
 {
     const accessToken = jwt.sign({
         payload
-    },process.env.ACCESS_TOKEN,{expiresIn: '10s'})
+    },process.env.ACCESS_TOKEN,{expiresIn: '3h'})
     return accessToken;
 }
 const genneralRefreshToken = async(payload: any) =>

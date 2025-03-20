@@ -5,7 +5,7 @@ const dotenv = require('dotenv');
 dotenv.config()
 const authMiddlewareClient = (req: Request, res: Response, next: NextFunction) => {
     try {
-        const tokenHeader = req.headers.token;
+        const tokenHeader = req.headers.authorization;
 
         // Kiểm tra token có tồn tại không
         if (!tokenHeader || typeof tokenHeader !== 'string') {
@@ -28,8 +28,8 @@ const authMiddlewareClient = (req: Request, res: Response, next: NextFunction) =
                         return res.status(403).json({ message: 'Token verification failed' });
                     }
                 }
-
-
+                req.user = decoded;
+                console.log(req.user);
                 next();
             } catch (error) {
                 return res.status(500).json({ message: 'Internal server error' });
@@ -41,4 +41,4 @@ const authMiddlewareClient = (req: Request, res: Response, next: NextFunction) =
     }
 };
 
-export {authMiddlewareClient};
+module.exports = {authMiddlewareClient};
