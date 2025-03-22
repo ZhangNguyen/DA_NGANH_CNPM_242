@@ -4,9 +4,7 @@ const dotenv = require('dotenv');
 dotenv.config();
 const genneralAccessToken = async(payload: any) =>
 {
-    const accessToken = jwt.sign({
-        payload
-    },process.env.ACCESS_TOKEN,{expiresIn: '3h'})
+    const accessToken = jwt.sign(payload,process.env.ACCESS_TOKEN,{expiresIn: '3h'})
     return accessToken;
 }
 const genneralRefreshToken = async(payload: any) =>
@@ -18,17 +16,18 @@ const refreshTokenJWTService =(token: any) =>
         {
             return new Promise((resolve, reject) => {
                 try{
+                    console.log(token);
                     jwt.verify(token,process.env.REFRESH_TOKEN,async(err:any,decoded:any) => {
                         if(err)
                         {
-                            resolve(
+                            return resolve(
                             {
                                 status: 'error',
                                 message: 'Token invalid'
                             })
                         }
-                        const {id} = decoded;
-                        const new_token = await genneralAccessToken(id)
+                        console.log(decoded)
+                        const new_token = await genneralAccessToken({ id: decoded.id })
                         return resolve(
                             {
                                 status:'success',

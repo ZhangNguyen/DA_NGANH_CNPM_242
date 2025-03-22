@@ -6,5 +6,5 @@ router.get('/adafruit-info',middleware.authMiddlewareClient,userController.getAd
 router.post('/adafruit-info',middleware.authMiddlewareClient,userController.updateAdaFruitInfoController)
 router.post('/sign-up',userController.createUser);
 router.post('/sign-in',userController.loginUser);
-router.post('/refresh-token',userController.refresh_token);
+router.get('/refresh-token',userController.refresh_token);
 export default router;

@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-const JwtService = require("../middleware/authMiddleware");
+import {refreshTokenJWTService} from "../services/JwtService";
 const UserService = require('../services/UserService');
 const User = require('../models/UserModel');
 const createUser = async(req: Request, res: Response) => {
@@ -43,7 +43,7 @@ const refresh_token = async (req: Request, res: Response) => {
             return res.status(401).json({ message: 'No refresh token provided' });
         }
         const refresh_token = authHeader.split(' ')[1];
-        const response = await JwtService.refreshTokenJWTService(refresh_token)
+        const response = await refreshTokenJWTService(refresh_token)
         return res.status(200).json(response);
     }
     catch (error: any) {

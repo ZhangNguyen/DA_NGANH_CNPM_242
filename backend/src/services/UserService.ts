@@ -1,5 +1,7 @@
 
 import User from '../models/UserModel';
+const mongoose = require('mongoose');
+
 import { genneralAccessToken, genneralRefreshToken } from './JwtService';
 const bcrypt = require('bcrypt');
 const createUser = (newUser: any) =>{
@@ -76,7 +78,8 @@ const loginUser = (userLogin: any) => {
             return resolve({
                 status: 'success',
                 message: 'User logged in successfully',
-                access_token
+                access_token,
+                refresh_token
             });
         }
         catch(e)
@@ -89,7 +92,11 @@ const loginUser = (userLogin: any) => {
 const getAdaFruitInfo = async(user:any) => {
     return new Promise(async (resolve, reject) => {
     try{
-        const result = await User.findOne({ _id: user.payload.id });
+        console.log("user.id:", typeof user.id);
+        console.log("user.id:",user.id);
+        const objectId = new mongoose.Types.ObjectId(user.id);
+        const result = await User.findOne({ _id: objectId });
+        console.log("result:",result);
         if(!result)
             return resolve(
             {
@@ -114,7 +121,7 @@ const getAdaFruitInfo = async(user:any) => {
 const updateAdaFruitInfo = async (user:any,data:any) => {
     return new Promise(async (resolve, reject) => {
     try {
-        const userId = user.payload.id; // Lấy user từ middleware decode JWT
+        const userId = user.id; // Lấy user từ middleware decode JWT
 
         const { adafruit_username, adafruit_key } = data;
 
