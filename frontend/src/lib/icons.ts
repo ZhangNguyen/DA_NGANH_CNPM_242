@@ -6,7 +6,6 @@ import {
     House,
     Thermometer,
     Droplet
-    
 } from 'lucide-react'
 
 const SidebarIcons = {

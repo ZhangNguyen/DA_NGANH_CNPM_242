@@ -15,25 +15,22 @@ import { Link } from "react-router-dom"
 
 const Sidebar = () => {
   return (
-    
         <Command className="bg-secondary rounded-none">
-            <CommandInput placeholder="Type a command or search..." />
-            <CommandList className="">
-                <CommandEmpty>No results found.</CommandEmpty>
-                <CommandGroup heading="Suggestions">
-                    <CommandItem>
+            <CommandList>
+                <CommandGroup heading="Suggestions" >
+                    <CommandItem className="text-lg">
                         <Link to='/' className="flex items-center">
-                            <SidebarIcons.House size={70} className="mr-2 text-xl}"/>
+                            <SidebarIcons.House className="mr-2 text-xl}"/>
                             <span className="font-semibold pl-5">Home</span>
                         </Link>
                     </CommandItem>
-                    <CommandItem>
+                    <CommandItem className="text-lg">
                         <Link to='dashboard' className="flex items-center">
                             <SidebarIcons.LayoutDashboard className="mr-2 text-xl"/>
                             <span className="font-semibold pl-5">Dashboard</span>
                         </Link>
                     </CommandItem>
-                    <CommandItem>
+                    <CommandItem className="text-lg">
                         <Link to='statistics' className="flex items-center">
                             <SidebarIcons.ChartColumn className="mr-2 text-xl"/>
                             <span className="font-semibold pl-5">Statistics</span>
@@ -42,13 +39,13 @@ const Sidebar = () => {
                 </CommandGroup>
                 <CommandSeparator />
                 <CommandGroup heading="Settings">
-                    <CommandItem>
+                    <CommandItem className="text-lg">
                         <Link to='/user' className="flex items-center">
                             <SidebarIcons.UserRoundCog className="mr-2 text-xl"/>
                             <span className="font-semibold pl-5">Profile</span>
                         </Link>
                     </CommandItem>
-                    <CommandItem>
+                    <CommandItem className="text-xl">
                         <Link to='/device_control' className="flex items-center">
                             <SidebarIcons.SlidersHorizontal className="mr-2 text-xl"/>
                             <span className="font-semibold pl-5">Device control</span>

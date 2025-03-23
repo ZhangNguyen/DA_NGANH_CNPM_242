@@ -7,10 +7,10 @@ const PublicLayout = () => {
     <>
       <Header/>
       <div className='flex'>
-        <div className='hidden md:block h-[100vh] w-[300px]'>
+        <div className='hidden md:block h-[100vh] w-1/6'>
           <Sidebar/>
         </div>
-        <div className='p-5 w-full md:max-w-[1140px]'>
+        <div className='p-5 w-full md:max-w-[1140px] mx-auto'>
           <Outlet />
         </div>
       </div>
