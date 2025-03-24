@@ -1,8 +1,15 @@
 import axios from './axios'
 
-export const apiSignUp = (data) => {  
+export const apiSignUp = (data: any) => {  
     axios({
-        url: ,
+        url: '/auth/signup',
+        method: 'POST',
+        data
+    })
+}
+export const apiSignIn = (data: any) => {
+    axios({
+        url: '/auth/signin',
         method: 'POST',
         data
     })

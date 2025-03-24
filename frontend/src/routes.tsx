@@ -1,6 +1,8 @@
 import App from './App';
 import { pathnames } from './lib/pathname';
-import { HomePage, PublicLayout, DashBoard, Statistics } from './pages/public';
+import { HomePage, PublicLayout, DashBoard, Statistics} from './pages/public';
+import Login from './pages/public/Login';
+import Register from './pages/public/Register';
 
 const routes = [
     {
@@ -22,6 +24,14 @@ const routes = [
                     {
                         path: pathnames.public.statistics,
                         element: <Statistics/>
+                    },
+                    {
+                        path: pathnames.public.login,
+                        element: <Login/>
+                    },
+                    {
+                        path: pathnames.public.register,
+                        element: <Register/>
                     }
                 ]
             },

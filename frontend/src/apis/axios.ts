@@ -6,11 +6,12 @@ const instance = axios.create({
 
 // tượng trưng cho 1 request gửi lên backend
 instance.interceptors.request.use((config) => {
+    // take token from local storage
     const store = localStorage.getItem('user-store');
     if (store) {
         const parsedStore = JSON.parse(store);
         if(parsedStore && parsedStore.state?.token) {
-            config.headers['Authorization'] = `Bearer ${parsedStore.state.token}`;
+            config.headers.Authorization = `Bearer ${parsedStore.state.token}`;
         }
     }
     return config;
