@@ -1,7 +1,10 @@
 import { DashboardCard } from "../../components"
 import { DashboardIcons } from '../../lib/icons'
+import { useUserStore } from '@/store/useUserStore'
+
 
 const DashBoard = () => {
+  // const userStore = useUserStore((state) => { state.accessToken })
   return (
     <div className="grid grid-rows-3 grid-flow-col gap-4 px-4 py-4 leading-10 border-4 h-screen-100dvh">
       <DashboardCard 
