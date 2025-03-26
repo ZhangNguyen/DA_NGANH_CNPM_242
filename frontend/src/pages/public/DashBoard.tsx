@@ -7,9 +7,8 @@ import {
   apiGetSensorDataByMonth } 
 from '@/apis/sensor'
 import { apiLoginAdafruit, apiGetAdafruitInfo } from "@/apis/adfruit"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useUserStore } from "@/store/useUserStore"
-import { get } from "http"
 
 const DashBoard = () => {
   // const userStore = useUserStore((state) => { state.accessToken })\
@@ -32,7 +31,7 @@ const DashBoard = () => {
     console.log('Adaruit info:', response.data)
   }
   const getSensorDataById = async () => {
-    const sensorId = '67dedfd4e5a0721202a29c48';
+    const sensorId = '67e3bae9e5a0721202a29e06';
     const response = await apiGetSensorDataById(sensorId)
     console.log(response)
   }
@@ -50,43 +49,58 @@ const DashBoard = () => {
     const response = await apiGetSensorDataByMonth(sensorType)
     console.log(response)
   }
-
   useEffect(() => {
     //loginAdafruit()
     //getSesnorByDay()
     getSensorByMonth(SensorType.Temperature)
-    getSensorData()
-    getAdafruitInfo()
-    getSensorDataById()
+    getSensorByMonth(SensorType.Humidity)
+    getSensorByMonth(SensorType.Soil)
+    getSensorByMonth(SensorType.Light)
+    // getSensorData()
+    // getAdafruitInfo()
+    // getSensorDataById()
   },[])
-
   return (
-    <div className="grid grid-rows-3 grid-flow-col gap-4 px-4 py-4 leading-10 border-4 h-screen-100dvh">
+    <div className="grid grid-cols-3 gap-4 px-4 py-4">
       <DashboardCard 
-        title="Total Products" 
+        title="Weather" 
         data={15} 
         icon={<DashboardIcons.Droplet/>} 
-        className="p-4 w-ful rounded-xl row-span-3"
+        className="p-4 w-full rounded-xl col-span-1"
       />
-      <DashboardCard 
-        title="Total Users" 
-        data={10} 
-        icon={<DashboardIcons.Droplet/>}
-        //className="p-4 w-ful rounded-xl col-span-2"
-      />
-      <DashboardCard 
-        title="Total Orders" 
-        data={5} 
-        icon={<DashboardIcons.Droplet/>} 
-        //className="p-4 w-ful rounded-xl row-span-3"
-      />
-      <DashboardCard 
-        title="Total Products" 
-        data={15} 
-        icon={<DashboardIcons.Droplet/>} 
-        //className="p-4 w-full rounded-xl row-span-2 col-span-2"
-      />
-  </div>
+      
+      <div className="col-span-2 grid grid-rows-2 gap-4">
+        <div className="grid grid-cols-2 gap-4">
+          <DashboardCard 
+            title="Humidity" 
+            data={10} 
+            icon={<DashboardIcons.Droplet/>}
+            className="p-4 w-full rounded-xl"
+          />
+          <DashboardCard 
+            title="Temperature" 
+            data={5} 
+            icon={<DashboardIcons.Thermometer/>} 
+            className="p-4 w-full rounded-xl"
+          />
+        </div>
+        
+        <div className="grid grid-cols-2 gap-4">
+          <DashboardCard 
+            title="Soil" 
+            data={15} 
+            icon={<DashboardIcons.Droplet/>} 
+            className="p-4 w-full rounded-xl"
+          />
+          <DashboardCard 
+            title="Light" 
+            data={10} 
+            icon={<DashboardIcons.Droplet/>}
+            className="p-4 w-full rounded-xl"
+          />
+        </div>
+      </div>
+    </div>
   )
 }
 
