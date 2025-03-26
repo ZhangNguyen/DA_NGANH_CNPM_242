@@ -1,12 +1,16 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useForm, FormProvider, Controller } from "react-hook-form";
+import { useForm, FormProvider, Controller, set } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormItem, FormLabel } from "@/components/ui/form";
+
+import { apiSignIn } from '@/apis/auth'
+
+import { useUserStore } from "@/store/useUserStore";
 
 // Schema xác thực dữ liệu với zod
 const formSchema = z.object({
@@ -24,17 +28,20 @@ const LoginForm = () => {
     resolver: zodResolver(formSchema),
     defaultValues: { email: "", password: "" },
   });
-
-  const onSubmit = (data: FormSchemaType) => {
-    console.log("Dữ liệu:", data);
+  
+  const { isAuthenticating, signIn } = useUserStore();
+  
+  const onSubmit = async (data: FormSchemaType) => { 
+    await signIn(data);
+    navigate('/');
   };
-
   return (
+    
     <div className="flex flex-col items-center gap-2">
       {/* Viền tối bao quanh Login/Register */}
       <div className="flex flex-col items-center gap-2 ">
       {/* Viền tối bao quanh Login/Register */}
-      <div className="w-[410px] rounded-lg border border-gray-700 p-1 bg-slate-100 dark:bg-slate-500">
+      <div className="w-[410px] rounded-lg p-1 bg-slate-100 dark:bg-slate-500">
 
         {/* Phần chọn Login/Register */}
         <div className="w-full flex gap-1">
@@ -63,7 +70,7 @@ const LoginForm = () => {
 
 
       {/* Form đăng nhập/đăng ký */}
-      <div className="p-6 border border-gray-300 bg-white dark:bg-zinc-800 rounded-lg w-[400px] mt-1">
+      <div className="p-6 bg-white dark:bg-zinc-800 rounded-lg w-[400px] mt-1">
         <h2 className="text-center text-xl font-semibold text-black dark:text-white">
           {isLogin ? "Đăng nhập" : "Đăng ký"}
         </h2>
@@ -112,6 +119,11 @@ const LoginForm = () => {
             <Button type="submit" className="w-full py-3 text-lg bg-black text-white hover:bg-slate-600">
               {isLogin ? "Đăng nhập" : "Đăng ký"}
             </Button>
+            <div className="flex justify-center mt-2">
+              <Button onClick={() => navigate("/")} className="w-1/2 py-3 text-lg bg-gray-500 text-white hover:bg-gray-400">
+              Trở về trang chủ
+              </Button>
+            </div>
           </form>
         </FormProvider>
       </div>

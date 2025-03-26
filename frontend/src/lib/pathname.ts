@@ -10,6 +10,11 @@ export const pathnames = {
         register: "/register",
     },
     // this use for login, user page
+    auth: {
+        authLayout: '/',
+        login: 'login',
+        register: 'register',
+    },
     private: {
         layout: '/private',
     }

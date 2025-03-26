@@ -88,7 +88,29 @@ const loginUser = (userLogin: any) => {
         }
     })
 }
-
+const getUser = async (user:any) => {
+    return new Promise(async (resolve, reject) => { 
+    try{
+        const objectId = new mongoose.Types.ObjectId(user.id);
+        const result = await User.findOne({ _id: objectId });
+        if(!result)
+            return resolve(
+            {
+                status: "Ok",
+                message: "No Userfound"
+            })
+        return resolve(
+            {
+                status: "Ok",
+                message: "User found",
+                data: result
+            })
+    }
+    catch(e)
+    {
+        throw new Error('St wrong');
+    }
+})}
 const getAdaFruitInfo = async(user:any) => {
     return new Promise(async (resolve, reject) => {
     try{
@@ -162,4 +184,10 @@ const updateAdaFruitInfo = async (user:any,data:any) => {
     }
 })
 }
-module.exports = { createUser,loginUser,getAdaFruitInfo,updateAdaFruitInfo};
+module.exports = { 
+    createUser,
+    loginUser,
+    getAdaFruitInfo,
+    updateAdaFruitInfo, 
+    getUser
+};

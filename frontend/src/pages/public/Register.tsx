@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormItem, FormLabel } from "@/components/ui/form";
 
+import { apiSignUp } from '@/apis/auth'
+
 // Schema xác thực dữ liệu với zod
 const formSchema = z
   .object({
@@ -35,15 +37,18 @@ const RegisterForm = () => {
       phone: "",
       confirmPassword: "",
     },
+    
   });
 
-  const onSubmit = (data: FormSchemaType) => {
-    console.log("Dữ liệu đăng ký:", data);
+  const onSubmit = async(data: FormSchemaType) => {
+    const response = await apiSignUp(data);
+    if(response) navigate('/login');
   };
+  console.log(import.meta.env.VITE_BACKEND_URL)
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <div className="w-[400px] rounded-lg border border-gray-700 p-1 bg-slate-100 dark:bg-slate-500">
+      <div className="w-[400px] rounded-lg p-1 bg-slate-100 dark:bg-slate-500">
         <div className="w-full flex gap-1">
           <button
             className={`flex-1 py-2 text-base font-semibold rounded-lg transition ${
@@ -63,7 +68,7 @@ const RegisterForm = () => {
           </button>
         </div>
       </div>
-      <div className="w-[400px] p-6 border border-gray-300 bg-white dark:bg-zinc-800 rounded-lg">
+      <div className="w-[400px] p-6  bg-white dark:bg-zinc-800 rounded-lg">
         <h2 className="text-center text-xl font-semibold text-black dark:text-white">Đăng ký</h2>
         <FormProvider {...formMethods}>
           <form onSubmit={formMethods.handleSubmit(onSubmit)} className="space-y-3 mt-2">
@@ -112,6 +117,11 @@ const RegisterForm = () => {
             <Button type="submit" className="w-full py-3 text-lg bg-black text-white hover:bg-slate-600">
               Đăng ký
             </Button>
+            <div className="flex justify-center mt-2">
+              <Button onClick={() => navigate("/")} className="w-1/2 py-3 text-lg bg-gray-500 text-white hover:bg-gray-400">
+              Trở về trang chủ
+              </Button>
+            </div>
           </form>
         </FormProvider>
       </div>

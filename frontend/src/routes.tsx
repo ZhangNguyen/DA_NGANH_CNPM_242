@@ -1,8 +1,7 @@
+import path from 'path';
 import App from './App';
 import { pathnames } from './lib/pathname';
-import { HomePage, PublicLayout, DashBoard, Statistics} from './pages/public';
-import Login from './pages/public/Login';
-import Register from './pages/public/Register';
+import { HomePage, PublicLayout, DashBoard, Statistics, Login, Register, AuthLayout} from './pages/public';
 
 const routes = [
     {
@@ -25,19 +24,25 @@ const routes = [
                         path: pathnames.public.statistics,
                         element: <Statistics/>
                     },
+                ],
+                
+            },
+            {
+                path: pathnames.auth.authLayout,
+                element: <AuthLayout/>,
+                children: [
                     {
                         path: pathnames.public.login,
-                        element: <Login/>
+                        element: <Login/>,
+                        
                     },
                     {
                         path: pathnames.public.register,
-                        element: <Register/>
+                        element: <Register/>,
                     }
                 ]
             },
-            {
-                
-            }
+            
         ]
     }
 ]

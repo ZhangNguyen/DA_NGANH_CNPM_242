@@ -9,9 +9,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-
+import { useUserStore } from '@/store/useUserStore'
+import { useEffect } from "react"
 
 const Header = () => {
+  const { user, signOut, setUser } = useUserStore() 
+  useEffect(() => {
+    setUser()
+  }, [])   
+  console.log(user?.username)
+  //console.log(isAuthenticating)
+
   return (
     <div className='bg-primary dark:bg-slate-700 text-white py-2 px-5 flex justify-between'>  
       <Link to='/' className="flex flex-row items-center space-x-4"> 
@@ -33,6 +41,11 @@ const Header = () => {
             <DropdownMenuItem>
               <Link to='/login'>Log in</Link>
             </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Link to='/register'>Register</Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={signOut}>Sign out</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
