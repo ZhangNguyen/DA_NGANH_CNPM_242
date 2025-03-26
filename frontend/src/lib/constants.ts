@@ -1,0 +1,4 @@
+const somthingThatWillBeConstant = {
+    
+}
+export { somthingThatWillBeConstant };
