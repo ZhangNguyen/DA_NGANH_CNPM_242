@@ -12,6 +12,8 @@ import { apiSignIn } from '@/apis/auth'
 
 import { useUserStore } from "@/store/useUserStore";
 
+import { toast } from "react-hot-toast";
+
 // Schema xác thực dữ liệu với zod
 const formSchema = z.object({
   email: z.string().email("Email không hợp lệ"),
@@ -29,12 +31,26 @@ const LoginForm = () => {
     defaultValues: { email: "", password: "" },
   });
   
-  const { isAuthenticating, signIn } = useUserStore();
+  const { } = useUserStore();
   
-  const onSubmit = async (data: FormSchemaType) => { 
-    await signIn(data);
-    navigate('/');
+  const onSubmit = async (data: FormSchemaType) => {
+    try {
+      const response = await apiSignIn(data);
+  
+      if (response.status === 200 && response.data.status !== "success") {
+  
+        toast.error("Email hoặc mật khẩu không đúng, vui lòng thử lại!"); // Hiển thị lỗi từ backend
+        return;
+      }
+  
+      toast.success("Đăng nhập thành công!");
+      useUserStore.setState({ isAuthenticating: true }); // Cập nhật trạng thái xác thực
+      navigate("/");
+    } catch (error) {
+      toast.error("Đăng nhập thất bại. Vui lòng thử lại!");
+    }
   };
+  
   return (
     
     <div className="flex flex-col items-center gap-2">
