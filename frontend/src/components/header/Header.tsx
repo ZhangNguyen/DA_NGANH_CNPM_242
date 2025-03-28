@@ -13,13 +13,13 @@ import { useUserStore } from '@/store/useUserStore'
 import { useEffect } from "react"
 
 const Header = () => {
-  const { user, signOut, setUser } = useUserStore() 
+  const { user, signOut, setUser, isAuthenticating } = useUserStore() 
   useEffect(() => {
     setUser()
   }, [])   
   console.log(user?.username)
   //console.log(isAuthenticating)
-
+  // conditional rendering
   return (
     <div className='bg-primary dark:bg-slate-700 text-white py-2 px-5 flex justify-between'>  
       <Link to='/' className="flex flex-row items-center space-x-4"> 
