@@ -44,7 +44,7 @@ export const useUserStore = create<State & Actions>()(
                     }
                 } catch (error) {
                     console.error('Failed to fetch user:', error);
-                    // Optionally clear user on error
+                    
                     set({ user: null });
                 }
             },
@@ -85,7 +85,8 @@ export const useUserStore = create<State & Actions>()(
             partialize: (state) => ({
                 accessToken: state.accessToken,
                 refreshToken: state.refreshToken,
-                user: state.user
+                user: state.user,
+                isAuthenticating: state.isAuthenticating
             })
         }
     )

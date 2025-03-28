@@ -5,7 +5,7 @@ const User = require('../models/UserModel');
 const jwt = require('jsonwebtoken');
 const createUser = async(req: Request, res: Response) => {
     try {
-        const {username, email, password,confirmPassword,phone} = req.body;
+        const {username, email, password, confirmPassword, phone} = req.body;
         const regex: RegExp = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         const isCheckEmail = regex.test(email);
         if (!username || !email || !password || !confirmPassword || !phone) {
