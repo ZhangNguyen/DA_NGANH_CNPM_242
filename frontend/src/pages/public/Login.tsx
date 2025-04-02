@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm, FormProvider, Controller, set } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,12 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormItem, FormLabel } from "@/components/ui/form";
 
-import { apiSignIn } from '@/apis/auth'
-
 import { useUserStore } from "@/store/useUserStore";
 
 import { toast } from "react-hot-toast";
-
 // Schema xác thực dữ liệu với zod
 const formSchema = z.object({
   email: z.string().email("Email không hợp lệ"),
@@ -25,30 +22,21 @@ type FormSchemaType = z.infer<typeof formSchema>;
 const LoginForm = () => {
   const [isLogin, setIsLogin] = useState(true);
   const navigate = useNavigate();
+  const { signIn, isAuthenticating } = useUserStore()
 
   const formMethods = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
     defaultValues: { email: "", password: "" },
   });
-  
-  const { } = useUserStore();
-  
+
   const onSubmit = async (data: FormSchemaType) => {
-    try {
-      const response = await apiSignIn(data);
-  
-      if (response.status === 200 && response.data.status !== "success") {
-  
-        toast.error("Email hoặc mật khẩu không đúng, vui lòng thử lại!"); // Hiển thị lỗi từ backend
-        return;
-      }
-  
-      toast.success("Đăng nhập thành công!");
-      useUserStore.setState({ isAuthenticating: true }); // Cập nhật trạng thái xác thực
-      navigate("/");
-    } catch (error) {
-      toast.error("Đăng nhập thất bại. Vui lòng thử lại!");
+    const response = await signIn(data);
+    if (!response) {
+      toast.error("Đăng nhập thất bại!");
+      return;
     }
+    toast.success("Đăng nhập thành công!");
+    navigate('/');
   };
   
   return (

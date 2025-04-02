@@ -1,5 +1,3 @@
-import { stat } from "fs";
-
 export const pathnames = {
     public: {
         layout: '/',
@@ -8,6 +6,8 @@ export const pathnames = {
         statistics: 'statistics',
         login: "/login",
         register: "/register",
+        deviceControl: 'device-control',
+        managePlant: 'manage-plant',
     },
     // this use for login, user page
     auth: {

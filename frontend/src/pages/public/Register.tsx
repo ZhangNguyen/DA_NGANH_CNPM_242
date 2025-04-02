@@ -41,11 +41,28 @@ const RegisterForm = () => {
     },
     
   });
+
+  const [displayedError, setDisplayedError] = useState<string | null>(null);
+  const { errors, isSubmitting } = formMethods.formState;
   
+  useEffect(() => {
+    if (isSubmitting) {
+      setDisplayedError(null); // Reset lỗi khi bắt đầu submit
+    }
+  
+    if (errors) {
+      const firstError = Object.values(errors)[0]?.message as string | undefined;
+      if (firstError && firstError !== displayedError) {
+        setDisplayedError(firstError);
+        toast.error(firstError);
+      }
+    }
+  }, [errors, isSubmitting, displayedError]);
+
   const onSubmit = async (data: FormSchemaType) => {
     try {
       const response = await apiSignUp(data);
-  console.log(response.status)
+      console.log(response.status)
       if (response.status === 200) {  
         if (response.data.status !== "success") {
           // Kiểm tra từng lỗi cụ thể

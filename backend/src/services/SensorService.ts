@@ -206,10 +206,10 @@ export const getAverageDay = async (user: any, type: string) => {
     
           const dataList = await fetchFeedData(adafruit_username, adafruit_key, feedKey);
           if (!dataList || dataList.length === 0) continue;
-    
-          const firstDayOfMonth = new Date();
-          firstDayOfMonth.setDate(1);
-          firstDayOfMonth.setHours(0, 0, 0, 0);
+            // i have to hard code the month to 3 because i want to get the data of March 2025
+            // there are no data for other months
+            const firstDayOfMonth = new Date(2025, 2, 1); // Month is 0-indexed, so 2 represents March
+            firstDayOfMonth.setHours(0, 0, 0, 0);
     
           const monthData = dataList.filter((record: any) => {
             const recordDate = new Date(record.created_at);
