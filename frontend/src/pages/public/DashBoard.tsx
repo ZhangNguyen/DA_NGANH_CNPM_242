@@ -6,7 +6,6 @@ import {
   apiGetSensorDataByDay, 
   apiGetSensorDataByMonth } 
 from '@/apis/sensor'
-import { apiLoginAdafruit, apiGetAdafruitInfo } from "@/apis/adfruit"
 import { useEffect, useState } from "react"
 
 const DashBoard = () => {
