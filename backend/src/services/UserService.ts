@@ -45,7 +45,7 @@ const createUser = (newUser: any) =>{
         }
     })
 }
-const loginUser = (userLogin: any) => {
+const loginUser = (req:any,userLogin: any) => {
     return new Promise(async (resolve,reject) =>
     {
         const {email,password} = userLogin;
@@ -70,10 +70,14 @@ const loginUser = (userLogin: any) => {
                 });
             }
             const access_token = await genneralAccessToken({
-                id: checkUser.id
+                id: checkUser.id,
+                adafruit_username: checkUser.adafruit_username,
+                adafruit_key: checkUser.adafruit_key,
             }); 
             const refresh_token = await genneralRefreshToken({
-                id: checkUser.id
+                id: checkUser.id,
+                adafruit_username: checkUser.adafruit_username,
+                adafruit_key: checkUser.adafruit_key,
             });
             return resolve({
                 status: 'success',
@@ -111,35 +115,14 @@ const getUser = async (user:any) => {
         throw new Error('St wrong');
     }
 })}
-const getAdaFruitInfo = async(user:any) => {
-    return new Promise(async (resolve, reject) => {
-    try{
-        console.log("user.id:", typeof user.id);
-        console.log("user.id:",user.id);
-        const objectId = new mongoose.Types.ObjectId(user.id);
-        const result = await User.findOne({ _id: objectId });
-        console.log("result:",result);
-        if(!result)
-            return resolve(
-            {
-                status: "Ok",
-                message: "No Userfound"
-            })
-        const adafruit_username = result.adafruit_username;
-        const adafruit_key = result.adafruit_key;
-        return resolve(
-            {
-                adafruit_username,
-                adafruit_key
-            }
-        )
-    }
-    catch(e)
-    {
-        throw new Error('St wrong');
-    }
-})
-}
+const getAdaFruitInfo = async (user: any) => {
+    const { adafruit_username, adafruit_key } = user;
+
+    return {
+        adafruit_username,
+        adafruit_key
+    };
+};
 const updateAdaFruitInfo = async (user:any,data:any) => {
     return new Promise(async (resolve, reject) => {
     try {
