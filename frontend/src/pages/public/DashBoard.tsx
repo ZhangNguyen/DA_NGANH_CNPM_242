@@ -1,4 +1,4 @@
-import { DashboardCard } from "../../components"
+import { DashboardCard, Weather } from "../../components"
 import { DashboardIcons } from '../../lib/icons'
 import { 
   apiGetSensorData, 
@@ -65,12 +65,7 @@ const DashBoard = () => {
   },[])
   return (
     <div className="grid grid-cols-3 gap-4 px-4 py-4">
-      <DashboardCard 
-        title="Weather" 
-        data={15} 
-        className="p-4 w-full rounded-xl col-span-1"
-        icon={<DashboardIcons.Thermometer size={40}/>}
-      />
+      <Weather/>
       
       <div className="col-span-2 grid grid-rows-2 gap-4">
         <div className="grid grid-cols-2 gap-4">
