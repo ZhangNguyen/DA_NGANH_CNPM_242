@@ -17,6 +17,9 @@ export class DeviceReceiver {
       headers: { "X-AIO-Key": this.aioKey }
     });
     console.log(`✅ Sent ${value} → ${feed_key}`);
+    device.value = value;
+    device.timeAction = new Date();
+    await device.save();
     }
   }
   

@@ -45,7 +45,7 @@ const createUser = (newUser: any) =>{
         }
     })
 }
-const loginUser = (req:any,userLogin: any) => {
+const loginUser = (userLogin: any) => {
     return new Promise(async (resolve,reject) =>
     {
         const {email,password} = userLogin;

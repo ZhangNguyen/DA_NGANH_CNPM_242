@@ -1,9 +1,10 @@
 const mongoose = require('mongoose');
-const ActionDevice = require('./ActionDevice');
+import ActionDevice from './ActionDevice';
 
 const SharedDeviceSchema = new mongoose.Schema(
     {
-      type: {
+      _id: { type: Number, required: true },
+      devicetype: {
         type: String,
         enum: ['fan_level','RGB','light'],
         required: true

@@ -7,7 +7,6 @@ import {FRONTEND_URL, PORT} from "./config/envConfig";
 import http from 'http';
 import { Server } from "socket.io";
 import { initSocket } from "./config/socket";
-import { sessionMiddleware } from "./config/session";
 let cors = require('cors');
 const bodyParser = require("body-parser");
 const app = express();
@@ -19,7 +18,6 @@ app.use(
     origin: FRONTEND_URL,
     credentials: true,
 }));
-app.use(sessionMiddleware);
 const server = http.createServer(app)
 initSocket(server);
 connectDB();

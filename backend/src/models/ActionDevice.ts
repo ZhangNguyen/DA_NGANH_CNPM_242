@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const actionDeviceSchema = new mongoose.Schema(
   {
+    _id: { type: Number, required: true },
     name:       { type: String, required: true,unique: true },
     type:       { type: String, enum: ['DedicatedDevice', 'SharedDevice'], required: true },
     status:     { type: String, enum: ['active', 'inactive'], default: 'active' },

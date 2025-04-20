@@ -16,7 +16,7 @@ export class SaveToDbObserver implements SensorObserver {
           { _id: sensor._id },
           {
             $set: {
-              newestdata: parseFloat(sensor.value),
+              newestdata: parseFloat(sensor.newestdata),
               timeUpdate: new Date(),
             },
           },

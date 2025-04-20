@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const sensorSchema = new mongoose.Schema(
     {
-      _id: { type: Number,unique: true, required: true },
+      _id: { type: Number,required: true },
       name: { type: String, required: true},
   
       type: {

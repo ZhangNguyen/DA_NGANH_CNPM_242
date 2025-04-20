@@ -5,15 +5,10 @@ const plantSchema = new mongoose.Schema(
         userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
         type: {type:String, required: true},
         location: {type:String, required: true},
-        limitWatering: {
-            min: {type:Number},
-            max: {type:Number}
-        },
-        limitTemp:{
-            min: {type:Number},
-            max: {type:Number}
-        },
-        deviceId: {type: mongoose.Schema.Types.ObjectId, ref: 'DedicatedDevice'},
+        limitWatering: {type:Number},
+        limitTemp:{type: Number},
+        pumpDeviceId: { type: Number, ref: 'DedicatedDevice' },  
+        soilDeviceId: { type: Number, ref: 'DedicatedDevice' },
         status: [{
             type: String,
             enum: ['watering', 'fanning','normal'],
@@ -23,7 +18,8 @@ const plantSchema = new mongoose.Schema(
     {timestamps: true}
 );
 plantSchema.index({ userId: 1, type: 1, location: 1 }, { unique: true });
-plantSchema.index({ deviceId: 1 }, { unique: true, sparse: true });
+plantSchema.index({ pumpDeviceId: 1 }, { unique: true, sparse: true });
+plantSchema.index({ soilDeviceId: 1 }, { unique: true, sparse: true });
 
 const Plant = mongoose.model('Plant', plantSchema);
 export default Plant;

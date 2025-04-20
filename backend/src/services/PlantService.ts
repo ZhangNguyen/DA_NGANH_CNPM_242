@@ -1,5 +1,6 @@
 import { set } from 'mongoose';
 import Plant from '../models/PlantModel';
+import DedicatedDevice from '../models/DedicatedDevice';
 import {
   setCache,
   getCache,
@@ -8,40 +9,55 @@ import {
   getAllCache,
   deleteCache
 } from '../services/CacheService';const TTL = 250; 
-export const createPlant = async (deviceId: any,plantData: any,user: any) => {
-    try
-    {
-      const userId = user.id; 
-      const existed = await Plant.findOne({ userId, type: plantData.type, location: plantData.location });
-      if (existed) {
-        throw new Error("Plant with this type and location already exists for user.");
-      }
-      const deviceInUse = await Plant.findOne({ deviceId });
-      if (deviceInUse) {
-        throw new Error("This device is already assigned to another plant.");
-      }
+export const createPlant = async (
+  pumpDeviceId: number | null,
+  soilDeviceId: number | null,
+  plantData: any,
+  user: any
+) => {
+  const userId = user.id;
 
-      const newPlant = await Plant.create({
-            ...plantData,
-            userId,
-            deviceId,
-        });
-      const cacheKey = buildCacheKey('plant', userId, newPlant._id.toString());
-      await setCache(cacheKey, newPlant, TTL);
-        return {
-            status: 'success',
-            message: 'Plant created successfully',
-            data: newPlant
-          };
+  try {
+  
+    if (pumpDeviceId != null) {
+      const pumpDevice = await DedicatedDevice.findOne({ _id: pumpDeviceId, devicetype: 'pump' });
+      if (!pumpDevice) throw new Error("Pump device not found.");
 
+      const pumpUsed = await Plant.findOne({ pumpDeviceId });
+      if (pumpUsed) throw new Error("Pump device already in use.");
     }
-    catch (error: any) {
-        return {
-          status: 'error',
-          message: error.message || 'Error creating plant'
-        };
-      }
-}
+
+    if (soilDeviceId != null) {
+      const soilDevice = await DedicatedDevice.findOne({ _id: soilDeviceId, devicetype: 'soil' });
+      if (!soilDevice) throw new Error("Soil device not found.");
+
+      const soilUsed = await Plant.findOne({ soilDeviceId });
+      if (soilUsed) throw new Error("Soil device already in use.");
+    }
+
+    const newPlant = await Plant.create({
+      ...plantData,
+      userId,
+      ...(pumpDeviceId != null && { pumpDeviceId }),
+      ...(soilDeviceId != null && { soilDeviceId }),
+    });
+
+    const cacheKey = buildCacheKey('plant', userId, newPlant._id.toString());
+    await setCache(cacheKey, newPlant, TTL);
+
+    return {
+      status: 'success',
+      message: 'Plant created successfully',
+      data: newPlant
+    };
+  } catch (error: any) {
+    return {
+      status: 'error',
+      message: error.message || 'Error creating plant'
+    };
+  }
+};
+
 export const getAllPlants = async (user: any) => {
   const userId = user.id;
 
@@ -60,8 +76,10 @@ export const getAllPlants = async (user: any) => {
 
     // Nếu không có cache thì lấy từ DB
     // const plants = await Plant.find({ userId });
-    const plants = await Plant.find({ userId }).populate('deviceId');   
-    if (!plants || plants.length === 0) {
+    const plants = await Plant.find({ userId })
+    .populate('pumpDeviceId')
+    .populate('soilDeviceId');
+      if (!plants || plants.length === 0) {
       throw new Error('No plants found for this user.');
     }
 
@@ -88,8 +106,10 @@ export const getPlantById = async (id: string, user: any) => {
     return cachedPlant;
   }
   try {
-    const plant = await Plant.findOne({ _id: id, userId }).populate('deviceId'); 
-    if (!plant) {
+    const plant = await Plant.findOne({ _id: id, userId })
+    .populate('pumpDeviceId')
+    .populate('soilDeviceId');
+      if (!plant) {
       throw new Error('Plant not found.');
     }
     await setCache(cacheKey, plant, TTL); // Cache the result for 5 minutes
@@ -104,17 +124,24 @@ export const getPlantById = async (id: string, user: any) => {
 export const updatePlant = async (id: string, plantData: any, user: any) => {
   const userId = user.id;
   const cacheKey = buildCacheKey('plant', userId, id);
-
+  console.log("oke1");
   try {
-    if (plantData.deviceId) {
-      const deviceUsed = await Plant.findOne({
-        deviceId: plantData.deviceId,
-        _id: { $ne: id }, // Loại trừ cây hiện tại
+    if (plantData.pumpDeviceId) {
+      const pumpUsed = await Plant.findOne({
+        pumpDeviceId: plantData.pumpDeviceId,
+        _id: { $ne: id }, // tránh tự kiểm
       });
-      if (deviceUsed) {
-        throw new Error("Thiết bị này đã được gán cho một cây khác.");
-      }
+      if (pumpUsed) throw new Error("Pump device already assigned to another plant.");
     }
+
+    if (plantData.soilDeviceId) {
+      const soilUsed = await Plant.findOne({
+        soilDeviceId: plantData.soilDeviceId,
+        _id: { $ne: id },
+      });
+      if (soilUsed) throw new Error("Soil device already assigned to another plant.");
+    }
+    console.log("oke2");
     const updatedPlant = await Plant.findOneAndUpdate(
       { _id: id, userId },
       plantData,
@@ -125,7 +152,6 @@ export const updatePlant = async (id: string, plantData: any, user: any) => {
       throw new Error('Plant not found or not authorized.');
     }
 
-    // Ghi đè lại cache
     await setCache(cacheKey, updatedPlant, TTL);
 
     return {
@@ -140,6 +166,7 @@ export const updatePlant = async (id: string, plantData: any, user: any) => {
     };
   }
 };
+
 export const deletePlant = async (id: string, user: any) => {
   const userId = user.id;
   const cacheKey = buildCacheKey('plant', userId, id);

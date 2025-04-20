@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
-const ActionDevice = require('./ActionDevice');
+import ActionDevice from './ActionDevice';
 const DedicatedDeviceSchema = new mongoose.Schema(
     {
-      _id: { type: Number,unique: true, required: true },
+      _id: { type: Number,required: true },
       devicetype: {
         type: String,
         enum: ['pump','soil'],

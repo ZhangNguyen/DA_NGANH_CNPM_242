@@ -28,7 +28,7 @@ export const fetchSharedDevicesFromAdafruit = async (user: any) => {
         { _id: latestData.data.feed_id },
         {
           _id: latestData.data.feed_id,
-          type: type,
+          devicetype: type,
           value: parseFloat(latestData.data.value),
           feed_key: feed.key,
           name: feed.name,

@@ -10,26 +10,27 @@ const sensorSubject = new SensorSubject();
 sensorSubject.attach(new SaveToDbObserver());
 sensorSubject.attach(new PlantStatusObserver());
 export const handleWebhookService = async (payload: any) => {
-  const { feed_id, value } = payload;
-  const updateValue = parseFloat(value);
-  const now = new Date();
-
   try {
     // Xử lý SENSOR
+    const data = Array.isArray(payload) ? payload[0] : payload;
+    const { feed_id, value } = data;
+    const updateValue = parseFloat(value);
+    const now = new Date();
+    console.log(feed_id);
     const sensorCacheKey = `sensor:${feed_id}`;
     let sensor = await getCache(sensorCacheKey);
-
     if (!sensor) {
-      sensor = await Sensor.findOne({ _id: feed_id });
+      sensor = await Sensor.findOne({ _id: Number(feed_id) });
     }
-
     if (sensor) {
       const updatedSensor = {
         ...sensor.toObject?.() || sensor,
         newestdata: updateValue,
         timeUpdate: now,
       };
-      io.to(`user:${sensor.user}`).emit("sensor_update", updatedSensor);
+      const iotouser = sensor.user.toString();
+      io.to(iotouser).emit("sensor_update", updatedSensor);
+     
       await sensorSubject.notify(updatedSensor);
       await setCache(sensorCacheKey, updatedSensor, TTL);
       return;
@@ -49,7 +50,9 @@ export const handleWebhookService = async (payload: any) => {
         value: updateValue,
         timeAction: now,
       };
-      io.to(`user:${soilDevice.user}`).emit("soil_update", updatedSoil);
+      const iotouser = soilDevice.user.toString();
+      io.to(iotouser).emit("soil_update", updatedSoil);
+      // io.to(`user:${soilDevice.user}`).emit("soil_update", updatedSoil);
       await sensorSubject.notify(updatedSoil);
       await setCache(soilCacheKey, updatedSoil, TTL);
       return;

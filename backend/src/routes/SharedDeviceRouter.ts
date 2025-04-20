@@ -1,5 +1,5 @@
 import express from 'express';
-const SharedDevice = require("../controllers/DedicatedDeviceController");
+const SharedDevice = require("../controllers/SharedDeviceController");
 const router = express.Router();
 const middleware = require('../middleware/authMiddleware')
 router.get('/', middleware.authMiddlewareClient, SharedDevice.getAllSharedDevices);
