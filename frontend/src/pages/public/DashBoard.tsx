@@ -40,16 +40,16 @@ const DashBoard = () => {
   const getSensorByMonth = async (sensorType: SensorType) => {
     const response = await apiGetSensorDataByMonth(sensorType)
     if (sensorType === SensorType.Temperature) {
-      getTemprature(Math.round(response.data.average))
+      getTemprature(Math.round(response.data.average * 100) / 100)
     }
     if (sensorType === SensorType.Humidity) {
-      getHumidity(Math.round(response.data.average))
+      getHumidity(Math.round(response.data.average * 100) / 100)
     }
     if (sensorType === SensorType.Soil) {
-      getSoil(Math.round(response.data.average))
+      getSoil(Math.round(response.data.average * 100) / 100)
     }
     if (sensorType === SensorType.Light) {
-      getLight(Math.round(response.data.average))
+      getLight(Math.round(response.data.average * 100) / 100)
     }
     
   }

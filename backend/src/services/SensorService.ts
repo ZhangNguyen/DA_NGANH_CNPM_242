@@ -1,7 +1,18 @@
 import axios from "axios"
 import User from '../models/UserModel';
 import Sensor from '../models/SensorModel';
-
+import { AverageDay } from './strategies/average/AverageDay';
+import { AverageMonth } from './strategies/average/AverageMonth';
+import { AverageContext } from './strategies/average/AverageContext'
+import redisClient from '../config/redisClient';
+import {
+  setCache,
+  getCache,
+  buildCacheKey,
+  clearUserCache,
+  getAllCache,
+  deleteCache
+} from '../services/CacheService';const TTL = 250; 
 const fetchFeedListFromAdafruit = async (adafruitUsername: string, adafruitKey: string) => {
     try {
       const response = await axios.get(
@@ -33,10 +44,10 @@ const fetchFeedListFromAdafruit = async (adafruitUsername: string, adafruitKey: 
     if (lowerName.includes('hum')) {
       return 'humidity';
     }
-    if(lowerName.includes('soil'))
-    {
-        return 'soil';
-    }
+    // if(lowerName.includes('soil'))
+    // {
+    //     return 'soil';
+    // }
   
     return null;
   };
@@ -54,21 +65,27 @@ const fetchSensorDataAdafruit = async (adafruitUsername: string, adafruitKey: st
         if (!type) continue;
       
         const response = await axios.get(
-          `https://io.adafruit.com/api/v2/${adafruitUsername}/feeds/${feed.feedKey}/data?limit=5`
+          `https://io.adafruit.com/api/v2/${adafruitUsername}/feeds/${feed.feedKey}/data/last`,
+          {
+            headers: {
+              'X-AIO-Key': adafruitKey,
+            }
+          }
         );
       
         const dataList = response.data;
-        const latestData = dataList[0];
-      
+    
         await Sensor.findOneAndUpdate(
-          { name: feed.name, user: userId },
+          { _id: dataList.feed_id},
           {
+            _id: dataList.feed_id,
             name: feed.name,
             type: type,
             feedKey: feed.feedKey,
             status: 'active',
             user: userId,
-            ...(latestData && { newestdata: parseFloat(latestData.value) })
+            newestdata: dataList.value,
+            timeUpdate: Date.now(),
           },
           { upsert: true, new: true }
         );
@@ -87,13 +104,22 @@ export const getAllDataSensors = async(user: any) =>
 {
     try{
         const userId = user.id;
-        const UserModel = await User.findById(userId);
-        const { adafruit_username, adafruit_key } = UserModel;
-        console.log(adafruit_username, adafruit_key);
+        const {adafruit_username,adafruit_key} = user
         await fetchSensorDataAdafruit(adafruit_username, adafruit_key, userId);
-        // Truy vấn mới nhất
-        const sensor = await Sensor.find({user:userId}).sort({updatedAt:-1});
-        return sensor;
+        // 2. Truy vấn DB mới nhất
+        const allSensors = await Sensor.find({ user: userId }).sort({ timeUpdate: -1 });
+        const latestSensors: Record<string, any> = {};
+        for (const sensor of allSensors) {
+          const { _id } = sensor;
+          if (!latestSensors[_id]) {
+            latestSensors[_id] = sensor;
+    
+            // Redis cache theo id 
+            const cacheKey = buildCacheKey('sensor', userId, _id.toString());
+            await setCache(cacheKey, sensor, TTL);
+          }
+        }
+        return Object.values(latestSensors);
     }
     catch (error: any) {
         return error
@@ -102,11 +128,15 @@ export const getAllDataSensors = async(user: any) =>
 export const getSensorById = async (user: any, sensorId: string) => {
     try {
       const userId = user.id;
-  
+      const cacheKey = buildCacheKey('sensor', userId, sensorId);
+      const cachedSensor = await getCache(cacheKey);
+      if (cachedSensor) {
+        console.log("✅ Sensor from cache");
+        return cachedSensor;
+      }
       // 1. Kiểm tra sensor có tồn tại và thuộc về user không
       const sensor = await Sensor.findOne({
-        _id: sensorId,
-        user: userId
+        _id: sensorId,user: userId
       });
   
       if (!sensor) {
@@ -115,6 +145,7 @@ export const getSensorById = async (user: any, sensorId: string) => {
           message: 'Sensor not found or you do not have permission'
         };
       }
+      await setCache(cacheKey, sensor, TTL);
       return sensor;
     }
     catch (error: any) {
@@ -122,122 +153,13 @@ export const getSensorById = async (user: any, sensorId: string) => {
         throw new Error('Cannot fetch sensor data');
       }
     }
-const fetchFeedData = async (adafruitUsername: string, adafruitKey: string, feedKey: string) => {
-      try {
-        const response = await axios.get(
-          `https://io.adafruit.com/api/v2/${adafruitUsername}/feeds/${feedKey}/data?limit=100`
-        );
-        return response.data;
-      } catch (error: any) {
-        console.error(`Error fetching data from Adafruit feed ${feedKey}:`, error.message);
-        throw new Error('Cannot fetch data from Adafruit IO');
-      }
-    };
-    
+
 export const getAverageDay = async (user: any, type: string) => {
-      try {
-        const userId = user.id;
-    
-        // 1. Lấy sensor dựa theo type và user
-        const sensors = await Sensor.find({ user: userId, type });
-    
-        if (!sensors) {
-          return { status: 'error', message: `Sensor not found for type ${type}` };
-        }
-        const UserModel = await User.findById(userId);
-        const { adafruit_username, adafruit_key } = UserModel;
-        let totalValue = 0;
-        let totalRecords = 0;
-        for(const sensor of sensors) {
-        const feedKey = sensor.feedKey; 
-        const dataList = await fetchFeedData(adafruit_username, adafruit_key, feedKey);
+  const context = new AverageContext(new AverageDay());
+  return await context.execute(user, type);
+};
 
-        if (!dataList || dataList.length === 0) {
-          return { status: 'error', message: `No data found for type ${type}` };
-        }
-        // 3. Lọc dữ liệu trong ngày hiện tại
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const todayData = dataList.filter((record: any) => {
-          const recordDate = new Date(record.created_at);
-          return recordDate >= today;
-        });
-        if (todayData.length === 0) {
-          return { status: 'error', message: `No data for today for type ${type}` };
-        }
-        const sensorTotal = todayData.reduce((sum: number, item: any) => sum + parseFloat(item.value), 0);
-        totalValue += sensorTotal;
-        totalRecords += todayData.length;
-    }
-      if (totalRecords === 0) {
-        return { status: 'error', message: `No data found today for type ${type}` };
-      }
-
-      const average = totalValue / totalRecords;
-
-      return {
-        status: 'success',
-        message: `Day average for ${type} calculated`,
-        average
-      };    
-      } catch (error: any) {
-        console.error('Error calculating day average:', error.message);
-        throw new Error('Cannot calculate day average');
-      }
-    };
-    
-    export const getAverageMonth = async (user: any, type: string) => {
-      try {
-        const userId = user.id;
-        const sensors = await Sensor.find({ user: userId, type });
-    
-        if (!sensors || sensors.length === 0) {
-          return { status: 'error', message: `No sensors found for type ${type}` };
-        }
-    
-        const UserModel = await User.findById(userId);
-        const { adafruit_username, adafruit_key } = UserModel;
-    
-        let totalValue = 0;
-        let totalRecords = 0;
-    
-        for (const sensor of sensors) {
-          const feedKey = sensor.feedKey; // Bắt buộc phải có feedKey
-    
-          const dataList = await fetchFeedData(adafruit_username, adafruit_key, feedKey);
-          if (!dataList || dataList.length === 0) continue;
-            // i have to hard code the month to 3 because i want to get the data of March 2025
-            // there are no data for other months
-            const firstDayOfMonth = new Date(2025, 2, 1); // Month is 0-indexed, so 2 represents March
-            firstDayOfMonth.setHours(0, 0, 0, 0);
-    
-          const monthData = dataList.filter((record: any) => {
-            const recordDate = new Date(record.created_at);
-            return recordDate >= firstDayOfMonth;
-          });
-    
-          if (monthData.length === 0) continue;
-    
-          const sensorTotal = monthData.reduce((sum: number, item: any) => sum + parseFloat(item.value), 0);
-          totalValue += sensorTotal;
-          totalRecords += monthData.length;
-        }
-    
-        if (totalRecords === 0) {
-          return { status: 'error', message: `No data found for this month for type ${type}` };
-        }
-    
-        const average = totalValue / totalRecords;
-    
-        return {
-          status: 'success',
-          message: `Month average for ${type} calculated`,
-          average
-        };
-    
-      } catch (error: any) {
-        console.error('Error calculating month average:', error.message);
-        throw new Error('Cannot calculate month average');
-      }
-    };
-    
+export const getAverageMonth = async (user: any, type: string) => {
+  const context = new AverageContext(new AverageMonth());
+  return await context.execute(user, type);
+};

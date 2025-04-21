@@ -1,16 +1,17 @@
 const mongoose = require('mongoose');
 const actionDeviceSchema = new mongoose.Schema(
   {
-    name:       { type: String, required: true },
-    type:       { type: String, enum: ['pump','fan'], required: true },
-    status:     { type: String, enum: ['active', 'inactive'], default: 'inactive' },
-    isPumping:  { type: Boolean, default: false },
-    isFanning:  { type: Boolean, default: false },// Manage Plant
-    timeaction: {  type: Date,}
+    _id: { type: Number, required: true },
+    name:       { type: String, required: true,unique: true },
+    type:       { type: String, enum: ['DedicatedDevice', 'SharedDevice'], required: true },
+    status:     { type: String, enum: ['active', 'inactive'], default: 'active' },
+    feed_key:   { type: String, required: true, unique: true },
+    user:       { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   },
-  { timestamps: true }
+  { timestamps: true,
+    discriminatorKey: 'type',
+   }
 );
-
 const ActionDevice = mongoose.model('ActionDevice', actionDeviceSchema);
 export default ActionDevice;
 
