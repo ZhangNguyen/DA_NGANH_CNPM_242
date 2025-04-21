@@ -7,7 +7,7 @@ import { apiGetRefreshToken } from './auth';
 import { useUserStore } from '@/store/useUserStore'
 
 const baseConfig: CreateAxiosDefaults = {
-    baseURL: import.meta.env.VITE_BACKEND_URL,
+    baseURL: "http://localhost:3000",
     withCredentials: true
 }
 
@@ -67,4 +67,5 @@ export default instance;
 //======================================================================================= 
 export const endPoints = {
     // viết để sẵn cho các endpoints
+    
 }

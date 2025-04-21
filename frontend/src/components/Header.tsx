@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom"
-import logo from '../../assets/reshot-icon-smart-farm-9R8XDL437Q.svg'
+import logo from '@/assets/reshot-icon-smart-farm-9R8XDL437Q.svg'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -13,12 +13,11 @@ import { useUserStore } from '@/store/useUserStore'
 import { useEffect } from "react"
 
 const Header = () => {
-  const { user, signOut, setUser } = useUserStore() 
+  const { signOut, setUser, isAuthenticating } = useUserStore() 
+  
   useEffect(() => {
     setUser()
   }, [])   
-  console.log(user?.username)
-  //console.log(isAuthenticating)
 
   return (
     <div className='bg-primary dark:bg-slate-700 text-white py-2 px-5 flex justify-between'>  
@@ -33,19 +32,29 @@ const Header = () => {
             <Avatar>
               <AvatarImage src="https://github.com/shadcn.png" />
               <AvatarFallback className="text-black">BT</AvatarFallback>
-            </Avatar></DropdownMenuTrigger>
+            </Avatar>
+          </DropdownMenuTrigger>
+
           <DropdownMenuContent>
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Profile</DropdownMenuItem>
-            <DropdownMenuItem>
-              <Link to='/login'>Log in</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Link to='/register'>Register</Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={signOut}>Sign out</DropdownMenuItem>
+            
+            {isAuthenticating ? (
+              <>
+                <DropdownMenuItem>Profile</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={signOut}>Sign out</DropdownMenuItem>
+              </>
+            ) : (
+              <>
+                <DropdownMenuItem>
+                  <Link to='/login'>Log in</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Link to='/register'>Register</Link>
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

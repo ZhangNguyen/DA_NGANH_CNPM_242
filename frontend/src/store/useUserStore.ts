@@ -14,10 +14,9 @@ interface State {
     refreshToken: string;
     isAuthenticating: boolean;
 }
-
 interface Actions {
     setUser: () => Promise<void>;
-    signIn: (data: any) => Promise<void>;
+    signIn: (data: any) => Promise<boolean>;
     signOut: () => void;
 }
 
@@ -29,7 +28,6 @@ export const useUserStore = create<State & Actions>()(
             refreshToken: '',
             isAuthenticating: false,
 
-            // Improved user setting method with error handling
             setUser: async () => {
                 try {
                     const response = await apiGetUser();
@@ -44,12 +42,11 @@ export const useUserStore = create<State & Actions>()(
                     }
                 } catch (error) {
                     console.error('Failed to fetch user:', error);
-                    // Optionally clear user on error
+                    
                     set({ user: null });
                 }
             },
 
-            // Improved sign-in method with error handling
             signIn: async (data) => {
                 try {
                     const response = await apiSignIn(data);
@@ -61,6 +58,7 @@ export const useUserStore = create<State & Actions>()(
                             refreshToken: response.data.refresh_token
                         });
                     }
+                    return true;
                 } catch (error) {
                     console.error('Sign in failed:', error);
                     set({ 
@@ -68,10 +66,10 @@ export const useUserStore = create<State & Actions>()(
                         accessToken: '',
                         refreshToken: ''
                     });
+                    return false;
                 }
             },
 
-            // Simple sign out method
             signOut: () => set({ 
                 user: null, 
                 accessToken: '', 
@@ -81,11 +79,11 @@ export const useUserStore = create<State & Actions>()(
         }),
         {
             name: 'user-store',
-            // Optional: You can add partialize to control what gets stored
             partialize: (state) => ({
                 accessToken: state.accessToken,
                 refreshToken: state.refreshToken,
-                user: state.user
+                user: state.user,
+                isAuthenticating: state.isAuthenticating
             })
         }
     )

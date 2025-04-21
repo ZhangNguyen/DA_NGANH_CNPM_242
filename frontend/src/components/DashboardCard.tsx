@@ -13,19 +13,22 @@ interface DashboardCardProps {
   className?: string;
 }
 
-const DashboardCard = ({title, data, icon, className}: DashboardCardProps) => {
+const DashboardCard = (
+  {title, data, className, icon}: DashboardCardProps,
+) => {
+  
   return (
     <Card className={cn(
       "bg-slate-100 dark:bg-slate-800 p-4 pb-0 w-full h-full",
       className
     )}>
       <CardContent>
-        <h3 className="text-3xl text-center mb-4 font-bold text-slate-500 dark:text-slate-200">
+        <h3 className="lg:text-3xl text-center mb-4 font-bold text-slate-500 dark:text-slate-200">
           {title}
         </h3>
         <div className="flex gap-5 justify-center items-center mb-4">
-          {icon} 
-          <h3 className="text-5xl font-semibold text-slate-500 dark:text-slate-200">
+         {icon}
+          <h3 className="lg:text-5xl font-semibold text-slate-500 dark:text-slate-200">
             {data}
           </h3>
         </div>
