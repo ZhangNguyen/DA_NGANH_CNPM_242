@@ -1,33 +1,28 @@
 import express, { Request, Response } from "express";
 import './types/index';
 import dotenv from "dotenv";
-import mongoose from "mongoose";
 import routes from "./routes/index";
-
+import { connectDB } from "./config/db";
+import {FRONTEND_URL, PORT} from "./config/envConfig";
+import http from 'http';
+import { Server } from "socket.io";
+import { initSocket } from "./config/socket";
 let cors = require('cors');
-
 const bodyParser = require("body-parser");
-dotenv.config();
 const app = express();
-const port = process.env.PORT || 3001;
-
+dotenv.config();
 app.use(bodyParser.json());
-
+//Dùng cors để cho phép frontend truy cập vào backend
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL,
+    origin: FRONTEND_URL,
     credentials: true,
 }));
-
-mongoose.connect(`mongodb+srv://khangnguyenminh2k4:${process.env.MONGO_DB}@cluster0.jxrys.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`)
-.then(() => {
-  console.log("Connected to MongoDB");
-})
-.catch((err) => {
-  console.log(err);
-});
+const server = http.createServer(app)
+initSocket(server);
+connectDB();
 routes(app);
 
-app.listen(port, () => {
-  console.log(`Server is running at http://localhost:${port}`);
+app.listen(PORT, () => {
+  console.log(`Server is running at http://localhost:${PORT}`);
 });

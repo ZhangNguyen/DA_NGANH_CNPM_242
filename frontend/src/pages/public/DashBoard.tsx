@@ -1,4 +1,4 @@
-import { DashboardCard } from "../../components"
+import { DashboardCard, Weather } from "../../components"
 import { DashboardIcons } from '../../lib/icons'
 import { 
   apiGetSensorData, 
@@ -6,7 +6,6 @@ import {
   apiGetSensorDataByDay, 
   apiGetSensorDataByMonth } 
 from '@/apis/sensor'
-import { apiLoginAdafruit, apiGetAdafruitInfo } from "@/apis/adfruit"
 import { useEffect, useState } from "react"
 
 const DashBoard = () => {
@@ -41,16 +40,16 @@ const DashBoard = () => {
   const getSensorByMonth = async (sensorType: SensorType) => {
     const response = await apiGetSensorDataByMonth(sensorType)
     if (sensorType === SensorType.Temperature) {
-      getTemprature(Math.round(response.data.average))
+      getTemprature(Math.round(response.data.average * 100) / 100)
     }
     if (sensorType === SensorType.Humidity) {
-      getHumidity(Math.round(response.data.average))
+      getHumidity(Math.round(response.data.average * 100) / 100)
     }
     if (sensorType === SensorType.Soil) {
-      getSoil(Math.round(response.data.average))
+      getSoil(Math.round(response.data.average * 100) / 100)
     }
     if (sensorType === SensorType.Light) {
-      getLight(Math.round(response.data.average))
+      getLight(Math.round(response.data.average * 100) / 100)
     }
     
   }
@@ -66,12 +65,7 @@ const DashBoard = () => {
   },[])
   return (
     <div className="grid grid-cols-3 gap-4 px-4 py-4">
-      <DashboardCard 
-        title="Weather" 
-        data={15} 
-        className="p-4 w-full rounded-xl col-span-1"
-        icon={<DashboardIcons.Thermometer size={40}/>}
-      />
+      <Weather/>
       
       <div className="col-span-2 grid grid-rows-2 gap-4">
         <div className="grid grid-cols-2 gap-4">

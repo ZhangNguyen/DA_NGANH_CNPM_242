@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom"
-import logo from '../../assets/reshot-icon-smart-farm-9R8XDL437Q.svg'
+import logo from '@/assets/reshot-icon-smart-farm-9R8XDL437Q.svg'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -13,12 +13,11 @@ import { useUserStore } from '@/store/useUserStore'
 import { useEffect } from "react"
 
 const Header = () => {
-  const { signOut, setUser, isAuthenticating, user } = useUserStore() 
+  const { signOut, setUser, isAuthenticating } = useUserStore() 
+  
   useEffect(() => {
     setUser()
   }, [])   
-
-  console.log('isAuthenticating', isAuthenticating)
 
   return (
     <div className='bg-primary dark:bg-slate-700 text-white py-2 px-5 flex justify-between'>  

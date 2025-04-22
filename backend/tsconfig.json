@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES6",
     "module": "CommonJS",
-    "rootDir": "./src",   // Đã chỉnh lại từ "./backend" thành "./src"
+    "rootDir": "./src",   
     "outDir": "./dist",   // Xuất file biên dịch ra "./dist"
     "strict": true,
     "esModuleInterop": true,

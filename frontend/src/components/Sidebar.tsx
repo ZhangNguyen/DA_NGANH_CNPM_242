@@ -5,7 +5,7 @@ import {
     CommandList,
     CommandSeparator,
   } from "@/components/ui/command"
-import { SidebarIcons } from '../../lib/icons'
+import { SidebarIcons } from '@/lib/icons'
 import { Link } from "react-router-dom"
 
 const Sidebar = () => {
