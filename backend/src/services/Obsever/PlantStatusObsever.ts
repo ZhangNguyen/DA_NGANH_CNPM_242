@@ -94,7 +94,7 @@ export class PlantStatusObserver implements SensorObserver {
       const lightScore = getScore(light, [[0,5,1], [5,10,2], [10,15,3], [15,20,4], [20,25,5], [25,30,6]]);
       const soilScore = getScore(soil, [[0,5,30], [5,10,25], [10,15,20], [15,20,15], [20,25,10], [25,30,5],[30,Infinity,0]]);
       const humidityScore = getScore(humidity, [[0,5,15], [5,10,10], [10,15,5],[15,Infinity,0]]);
-      const fanScore = getScore(temperature, [[40, Infinity, 40], [30,40,20], [20,30,10], [10,20,5]]);
+      const fanScore = getScore(temperature, [[50,Infinity,80],[40, 50, 40], [30,40,20], [20,30,10], [10,20,5]]);
 
       const wateringScore = tempScore + lightScore + soilScore + humidityScore;
 

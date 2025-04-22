@@ -4,24 +4,26 @@ import {
     UserRoundCog,
     ChartColumn,
     House,
+    TreePalm,
     Thermometer,
-    Droplet
+    Droplet,
+    Sprout,
+    Sun,
 } from 'lucide-react'
 
-const SidebarIcons = {
+export const SidebarIcons = {
     LayoutDashboard,
     SlidersHorizontal,
     UserRoundCog,
     ChartColumn,
-    House
+    House,
+    TreePalm
 }
 
-const DashboardIcons = {
+export const DashboardIcons = {
     Thermometer,
-    Droplet
+    Droplet,
+    Sprout,
+    Sun
 }
 
-export {
-    SidebarIcons,
-    DashboardIcons
-}

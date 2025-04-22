@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm, FormProvider, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -9,7 +9,9 @@ import { FormItem, FormLabel } from "@/components/ui/form";
 
 import { apiSignUp } from '@/apis/auth'
 
+import { toast } from "react-hot-toast";
 // Schema xác thực dữ liệu với zod
+
 const formSchema = z
   .object({
     username: z.string().min(3, "Tên người dùng ít nhất 3 ký tự"),
@@ -40,10 +42,62 @@ const RegisterForm = () => {
     
   });
 
-  const onSubmit = async(data: FormSchemaType) => {
-    const response = await apiSignUp(data);
-    if(response) navigate('/login');
+  const [displayedError, setDisplayedError] = useState<string | null>(null);
+  const { errors, isSubmitting } = formMethods.formState;
+  
+  useEffect(() => {
+    if (isSubmitting) {
+      setDisplayedError(null); // Reset lỗi khi bắt đầu submit
+    }
+  
+    if (errors) {
+      const firstError = Object.values(errors)[0]?.message as string | undefined;
+      if (firstError && firstError !== displayedError) {
+        setDisplayedError(firstError);
+        toast.error(firstError);
+      }
+    }
+  }, [errors, isSubmitting, displayedError]);
+
+  const onSubmit = async (data: FormSchemaType) => {
+    try {
+      const response = await apiSignUp(data);
+      console.log(response.status)
+      if (response.status === 200) {  
+        if (response.data.status !== "success") {
+          // Kiểm tra từng lỗi cụ thể
+
+          switch (response.data.message) {
+            case "All fields are required":
+              toast.error("Vui lòng điền đầy đủ thông tin.");
+              break;
+            case "Invalid email format":
+              toast.error("Email không đúng định dạng.");
+              break;
+            case "Password and Confirm Password do not match":
+              toast.error("Mật khẩu và xác nhận mật khẩu không khớp.");
+              break;
+            case "The email is already in the database":
+              toast.error("Email đã tồn tại.");
+              break;
+            case "The phone is already in the database":
+              toast.error("Số điện thoại đã tồn tại.");
+              break;
+            default:
+              toast.error(response.data.message);
+              break;
+          }
+          return;
+        }
+  
+        toast.success("Đăng ký thành công!");
+        navigate("/login");
+      }
+    } catch (error) {
+      toast.error("Đăng ký thất bại. Vui lòng thử lại!");
+    }
   };
+  
   console.log(import.meta.env.VITE_BACKEND_URL)
 
   return (
