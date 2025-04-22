@@ -1,22 +1,17 @@
 import {
     Command,
-    CommandDialog,
-    CommandEmpty,
     CommandGroup,
-    CommandInput,
     CommandItem,
     CommandList,
     CommandSeparator,
-    CommandShortcut,
   } from "@/components/ui/command"
-import { LayoutDashboard } from 'lucide-react'
-import { SidebarIcons } from '../../lib/icons'
+import { SidebarIcons } from '@/lib/icons'
 import { Link } from "react-router-dom"
 
 const Sidebar = () => {
   return (
-        <Command className="bg-secondary rounded-none">
-            <CommandList>
+        <Command className="bg-gray-300 rounded-none">
+            <CommandList className="max-h-fit">
                 <CommandGroup heading="Suggestions" >
                     <CommandItem className="text-lg">
                         <Link to='/' className="flex items-center">
@@ -36,6 +31,12 @@ const Sidebar = () => {
                             <span className="font-semibold pl-5">Statistics</span>
                         </Link>
                     </CommandItem>
+                    <CommandItem className="text-lg">
+                        <Link to='manage-plant' className="flex items-center">
+                            <SidebarIcons.TreePalm className="mr-2 text-xl"/>
+                            <span className="font-semibold pl-5">Manage plants</span>
+                        </Link>
+                    </CommandItem>
                 </CommandGroup>
                 <CommandSeparator />
                 <CommandGroup heading="Settings">
@@ -46,7 +47,7 @@ const Sidebar = () => {
                         </Link>
                     </CommandItem>
                     <CommandItem className="text-xl">
-                        <Link to='/device_control' className="flex items-center">
+                        <Link to='/device-control' className="flex items-center">
                             <SidebarIcons.SlidersHorizontal className="mr-2 text-xl"/>
                             <span className="font-semibold pl-5">Device control</span>
                         </Link>
