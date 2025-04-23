@@ -6,6 +6,7 @@ import axios, {
 import { apiGetRefreshToken } from './auth';
 import { useUserStore } from '@/store/useUserStore'
 
+// wss://1391-2001-ee0-5214-8b50-9018-5733-4618-fff2.ngrok-free.app
 const baseConfig: CreateAxiosDefaults = {
     baseURL: import.meta.env.VITE_BACKEND_URL,
     withCredentials: true

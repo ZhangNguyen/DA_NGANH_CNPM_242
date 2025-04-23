@@ -1,8 +1,4 @@
-// import { apiLoginAdafruit, apiGetAdafruitInfo } from "@/apis/adfruit"
-// import { useUserStore } from "@/store/useUserStore"
-// import { apiGetSensorData, apiGetSensorDataById } from "@/apis/sensor"
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -58,6 +54,37 @@ import { Badge } from "@/components/ui/badge";
 import { Droplet, Fan, LightbulbIcon, Pencil, Trash2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 
+// API
+import { socket } from '@/apis/socket'
+import { } from '@/apis/sensor'
+import { apiGetAllDedicatedDevice, apiGetAllSharedDevice, apiGetDedicatedDeviceByID, apiGetSharedDeviceByID} from '@/apis/device'
+import { apiFan, apiLight, apiPower, apiRGB, apiWatering } from '@/apis/command'
+
+//console.log(useUserStore.getState().accessToken)
+//   // Yêu cầu đúng các đoạn sau
+// socket.on("connect", () => {
+//   console.log("Connected to socket:", socket.id);
+// //Tham gia vào room user_id
+//   socket.emit("join-room", useUserStore.getState().accessToken);
+// });
+//Sensor bao gồm [light,humid,temp]
+const getDedicatedDevices = async () => {
+  await apiGetAllDedicatedDevice()
+}
+const getSharedDevice = async () => {
+  await apiGetAllSharedDevice()
+}
+
+socket.on("sensor_update", (data) => {
+  console.log("Sensor updated:", data);
+});
+socket.on("soil_update", (data) => {
+  console.log("Soil updated:", data);
+});
+socket.on("plant-status-update", (data) => {
+  console.log("Plant status update:", data);
+});
+console.log(123)
 // Define types
 type DeviceType = "waterPump" | "fan" | "light";
 
@@ -77,13 +104,17 @@ interface AdafruitConfig {
 // Component for device control page
 const DeviceControl = () => {
   // State for devices
+  useEffect(() => {
+    getDedicatedDevices()
+    getSharedDevice()
+  }, [])
   const [devices, setDevices] = useState<Device[]>([
-    { id: 1, name: "Water Pump 1", type: "waterPump", status: "online", value: 0 },
-    { id: 2, name: "Ceiling Fan", type: "fan", status: "online", value: 1 },
-    { id: 3, name: "Growth Light", type: "light", status: "online", value: 75 },
-    { id: 4, name: "Watering System 2", type: "waterPump", status: "offline", value: 0 },
-    { id: 5, name: "Ventilation Fan", type: "fan", status: "offline", value: 0 },
-    { id: 6, name: "LED Panel", type: "light", status: "online", value: 50 },
+    // { id: 1, name: "Water Pump 1", type: "waterPump", status: "online", value: 0 },
+    // { id: 2, name: "Ceiling Fan", type: "fan", status: "online", value: 1 },
+    // { id: 3, name: "Growth Light", type: "light", status: "online", value: 75 },
+    // { id: 4, name: "Watering System 2", type: "waterPump", status: "offline", value: 0 },
+    // { id: 5, name: "Ventilation Fan", type: "fan", status: "offline", value: 0 },
+    // { id: 6, name: "LED Panel", type: "light", status: "online", value: 50 },
   ]);
 
   // State for Adafruit configuration
@@ -219,7 +250,6 @@ const DeviceControl = () => {
       <Tabs defaultValue="devices" className="mb-8">
         <TabsList className="mb-4">
           <TabsTrigger value="devices">Devices</TabsTrigger>
-          <TabsTrigger value="sensor">Sensors</TabsTrigger>
           <TabsTrigger value="adafruit">Adafruit Configuration</TabsTrigger>
         </TabsList>
 
