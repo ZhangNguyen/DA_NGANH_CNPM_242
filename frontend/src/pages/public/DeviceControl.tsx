@@ -2,32 +2,7 @@
 // import { useUserStore } from "@/store/useUserStore"
 // import { apiGetSensorData, apiGetSensorDataById } from "@/apis/sensor"
 
-// const DeviceControl = () => {
-//   const {} = useUserStore()
-//   const getSensorData = async () => {
-//     const response = await apiGetSensorData()
-//   }
-//   const adfruit_data = {
-//     adafruit_username: import.meta.env.VITE_ADAFRUIT_USERNAME,
-//     adafruit_key: import.meta.env.VITE_ADAFRUIT_KEY
-//   }
-//   const loginAdafruit = async () => {
-//     const response = await apiLoginAdafruit(adfruit_data)
-//   }
-//   const getAdafruitInfo = async () => {
-//     const response = await apiGetAdafruitInfo()
-//   }
-//   const getSensorDataById = async () => {
-//     const sensorId = '67e3bae9e5a0721202a29e06';
-//     const response = await apiGetSensorDataById(sensorId)
-//   }
-//   return (
-//     <div>DeviceControl</div>
-//   )
-// }
-
-// export default DeviceControl
-import React, { useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -100,7 +75,7 @@ interface AdafruitConfig {
 }
 
 // Component for device control page
-const DeviceControl: React.FC = () => {
+const DeviceControl = () => {
   // State for devices
   const [devices, setDevices] = useState<Device[]>([
     { id: 1, name: "Water Pump 1", type: "waterPump", status: "online", value: 0 },
@@ -244,6 +219,7 @@ const DeviceControl: React.FC = () => {
       <Tabs defaultValue="devices" className="mb-8">
         <TabsList className="mb-4">
           <TabsTrigger value="devices">Devices</TabsTrigger>
+          <TabsTrigger value="sensor">Sensors</TabsTrigger>
           <TabsTrigger value="adafruit">Adafruit Configuration</TabsTrigger>
         </TabsList>
 
@@ -459,6 +435,7 @@ const DeviceControl: React.FC = () => {
             </CardContent>
           </Card>
         </TabsContent>
+                    
       </Tabs>
     </div>
   );
