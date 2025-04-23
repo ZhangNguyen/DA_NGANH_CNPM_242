@@ -7,7 +7,7 @@ import { apiGetRefreshToken } from './auth';
 import { useUserStore } from '@/store/useUserStore'
 
 const baseConfig: CreateAxiosDefaults = {
-    baseURL: "http://localhost:3000",
+    baseURL: import.meta.env.VITE_BACKEND_URL,
     withCredentials: true
 }
 
