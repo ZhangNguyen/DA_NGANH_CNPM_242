@@ -2,12 +2,11 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { apiSignIn, apiGetUser } from '@/apis/auth'
 
-// Improved type definitions
+// Type definitions
 interface User {
     id?: string;
     username?: string;
 }
-
 interface State {
     user: User | null;
     accessToken: string;
@@ -20,7 +19,7 @@ interface Actions {
     signOut: () => void;
 }
 
-export const useUserStore = create<State & Actions>()(
+export const useUserStore = create<State & Actions>() (
     persist(
         (set, get) => ({
             user: null,
