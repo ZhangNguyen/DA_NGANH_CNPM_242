@@ -12,11 +12,11 @@ sensorSubject.attach(new PlantStatusObserver());
 export const handleWebhookService = async (payload: any) => {
   try {
     // Xử lý SENSOR
+
     const data = Array.isArray(payload) ? payload[0] : payload;
     const { feed_id, value } = data;
     const updateValue = parseFloat(value);
     const now = new Date();
-    console.log(feed_id);
     const sensorCacheKey = `sensor:${feed_id}`;
     let sensor = await getCache(sensorCacheKey);
     if (!sensor) {
@@ -50,7 +50,8 @@ export const handleWebhookService = async (payload: any) => {
         value: updateValue,
         timeAction: now,
       };
-      const iotouser = soilDevice.user.toString();
+      const iotouser = soilDevice.user._id.toString();
+
       io.to(iotouser).emit("soil_update", updatedSoil);
       // io.to(`user:${soilDevice.user}`).emit("soil_update", updatedSoil);
       await sensorSubject.notify(updatedSoil);
