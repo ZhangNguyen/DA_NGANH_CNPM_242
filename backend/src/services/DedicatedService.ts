@@ -45,9 +45,9 @@ export const fetchDevicesFromAdafruit = async (user: any) => {
 
 export const getDevicesByUser = async (user: any) => {
     try{
-    await fetchDevicesFromAdafruit(user);
-    const devices = await DedicatedDevice.find({ user: user.id });
-    return devices;
+      // await fetchDevicesFromAdafruit(user);
+      const devices = await DedicatedDevice.find({ user: user.id });
+      return devices;
   }
   catch (error: any) {
     console.error('❌ Error in getDevicesByUser:', error.message);
