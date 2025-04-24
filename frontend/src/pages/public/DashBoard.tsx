@@ -46,7 +46,7 @@ const DashBoard = () => {
       getHumidity(Math.round(response.data.average * 100) / 100)
     }
     if (sensorType === SensorType.Soil) {
-      getSoil(Math.round(response.data.average * 100) / 100)
+      getSoil(Math.round(0.123123 * 100) / 100)
     }
     if (sensorType === SensorType.Light) {
       getLight(Math.round(response.data.average * 100) / 100)
