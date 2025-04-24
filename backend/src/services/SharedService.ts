@@ -47,8 +47,8 @@ export const fetchSharedDevicesFromAdafruit = async (user: any) => {
 
 export const getSharedDevicesByUser = async (user: any) => {
   try {
-    await fetchSharedDevicesFromAdafruit(user);
-    return await SharedDevice.find({ user: user.id });
+      // await fetchSharedDevicesFromAdafruit(user);
+      return await SharedDevice.find({ user: user.id });
   } catch (err: any) {
     throw new Error("Failed to get shared devices");
   }
