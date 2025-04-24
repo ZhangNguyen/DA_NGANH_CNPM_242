@@ -90,7 +90,7 @@ export class PlantStatusObserver implements SensorObserver {
         return 0;
       };
 
-      const tempScore = getScore(temperature, [[0,10,5], [10,20,10], [20,30,15], [30,40,20], [40,50,25],[50,Infinity,50]]);
+      const tempScore = getScore(temperature, [[0,10,5], [10,20,10], [20,30,15], [30,40,20], [40,50,25],[50,Infinity,40]]);
       const lightScore = getScore(light, [[0,5,1], [5,10,2], [10,15,3], [15,20,4], [20,25,5], [25,30,6]]);
       const soilScore = getScore(soil, [[0,5,30], [5,10,25], [10,15,20], [15,20,15], [20,25,10], [25,30,5],[30,Infinity,0]]);
       const humidityScore = getScore(humidity, [[0,5,15], [5,10,10], [10,15,5],[15,Infinity,0]]);
@@ -124,6 +124,9 @@ export class PlantStatusObserver implements SensorObserver {
         await Plant.findByIdAndUpdate(plant._id, { status: arr_status });
       }
     }));
+    console.log(userId);
+    console.log("OKE LA")
+    console.log(changedPlants);
 
     if (changedPlants.length > 0) {
       io.to(userId.toString()).emit("plant-status-update", changedPlants);

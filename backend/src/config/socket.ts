@@ -22,7 +22,7 @@ export function initSocket(server: any) {
     }
     jwt.verify(token, process.env.ACCESS_TOKEN as string, (err: any, decoded: any) => {
         if (err) return next(new Error("Authentication error: Invalid token"));
-        socket.data.userId = decoded.userId;
+        socket.data.userId = decoded.id;
         next();
       });
 })

@@ -18,11 +18,10 @@ app.use(
     origin: FRONTEND_URL,
     credentials: true,
 }));
+routes(app);
 const server = http.createServer(app)
 initSocket(server);
 connectDB();
-routes(app);
-
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server is running at http://localhost:${PORT}`);
 });
