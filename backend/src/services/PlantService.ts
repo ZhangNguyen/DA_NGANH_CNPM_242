@@ -124,7 +124,6 @@ export const getPlantById = async (id: string, user: any) => {
 export const updatePlant = async (id: string, plantData: any, user: any) => {
   const userId = user.id;
   const cacheKey = buildCacheKey('plant', userId, id);
-  console.log("oke1");
   try {
     if (plantData.pumpDeviceId) {
       const pumpUsed = await Plant.findOne({
@@ -141,7 +140,6 @@ export const updatePlant = async (id: string, plantData: any, user: any) => {
       });
       if (soilUsed) throw new Error("Soil device already assigned to another plant.");
     }
-    console.log("oke2");
     const updatedPlant = await Plant.findOneAndUpdate(
       { _id: id, userId },
       plantData,

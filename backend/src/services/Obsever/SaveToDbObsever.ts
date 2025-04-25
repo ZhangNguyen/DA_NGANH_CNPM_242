@@ -26,9 +26,9 @@ export class SaveToDbObserver implements SensorObserver {
       }
 
       // Nếu là thiết bị soil
-      if (sensor.type === "soil") {
+      if (sensor.devicetype === "soil") {
         await DedicatedDevice.findOneAndUpdate(
-          { _id: sensor._id, type: "soil" },
+          { _id: sensor._id, devicetype: "soil" },
           {
             $set: {
               value: parseFloat(sensor.value),

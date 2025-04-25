@@ -26,7 +26,6 @@ const refreshTokenJWTService =(token: any) =>
                                 message: 'Token invalid'
                             })
                         }
-                        console.log(decoded)
                         const new_token = await genneralAccessToken({ id: decoded.id })
                         return resolve(
                             {
