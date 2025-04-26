@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,221 +37,245 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Leaf, Pencil, Search, Trash2, Droplet, Fan, AlertCircle } from "lucide-react";
+import { 
+  apiGetAllPlants, 
+  apiUpdatePlantByID, 
+  apiDeletePlantByID,
+} from "@/apis/plant";
+import { toast } from "react-hot-toast";
+import { Device } from "@/types/deviceType"
+import { useDeviceStore } from "@/store/useDeviceStore";
+import { usePlantStore } from "@/store/usePlantStore";
 
-// Define types for Plant status
-type PlantStatus = "normal" | "watering" | "fanning";
-
-// Define Device interfaces
-interface SoilDevice {
-  id: string;
-  name: string;
-  assignedTo: number | null;
-}
-
-interface PumpDevice {
-  id: string;
-  name: string;
-  assignedTo: number | null;
-}
-
-// Interface for Device assignment
-interface DeviceAssignment {
-  soil: string | null; // ID of the soil device
-  pump: string | null; // ID of the pump device
-}
-
-// Define Plant interface
-interface Plant {
-  id: number;
-  name: string;
-  status: PlantStatus;
-  devices: DeviceAssignment;
-  isWatering: boolean;
-  updatedAt: string;
-}
-
-const ManagePlant: React.FC = () => {
-  // Initial devices data
-  const [soilDevices, setSoilDevices] = useState<SoilDevice[]>([
-    { id: "soil1", name: "Soil 1", assignedTo: null },
-    { id: "soil2", name: "Soil 2", assignedTo: null },
-    { id: "soil3", name: "Soil 3", assignedTo: null },
-    { id: "soil4", name: "Soil 4", assignedTo: null },
-  ]);
-
-  const [pumpDevices, setPumpDevices] = useState<PumpDevice[]>([
-    { id: "pump1", name: "Pump 1", assignedTo: null },
-    { id: "pump2", name: "Pump 2", assignedTo: null },
-    { id: "pump3", name: "Pump 3", assignedTo: null },
-    { id: "pump4", name: "Pump 4", assignedTo: null },
-  ]);
-
-  // Initial plants data
-  const [plants, setPlants] = useState<Plant[]>([
-    { 
-      id: 1, 
-      name: "Green Plant", 
-      status: "normal", 
-      devices: { soil: null, pump: null },
-      isWatering: false,
-      updatedAt: new Date().toLocaleString() 
-    },
-    { 
-      id: 2, 
-      name: "Red Plant", 
-      status: "watering", 
-      devices: { soil: null, pump: null }, 
-      isWatering: false,
-      updatedAt: new Date().toLocaleString() 
-    },
-    { 
-      id: 3, 
-      name: "Cactus", 
-      status: "normal", 
-      devices: { soil: null, pump: null }, 
-      isWatering: false,
-      updatedAt: new Date().toLocaleString() 
-    },
-    { 
-      id: 4, 
-      name: "Needle Leaf Plant", 
-      status: "normal", 
-      devices: { soil: null, pump: null },
-      isWatering: false,
-      updatedAt: new Date().toLocaleString() 
-    },
-    { 
-      id: 5, 
-      name: "Rose", 
-      status: "watering",
-      devices: { soil: null, pump: null },
-      isWatering: false,
-      updatedAt: new Date().toLocaleString() 
-    },
-    { 
-      id: 6, 
-      name: "Succulent", 
-      status: "normal", 
-      devices: { soil: null, pump: null }, 
-      isWatering: false,
-      updatedAt: new Date().toLocaleString() 
-    },
-    { 
-      id: 7, 
-      name: "Rice Plant", 
-      status: "watering", 
-      devices: { soil: null, pump: null },
-      isWatering: false,
-      updatedAt: new Date().toLocaleString() 
-    },
-    { 
-      id: 8, 
-      name: "Sugarcane", 
-      status: "fanning", 
-      devices: { soil: null, pump: null },
-      isWatering: false,
-      updatedAt: new Date().toLocaleString() 
-    },
-    { 
-      id: 9, 
-      name: "Pine Tree", 
-      status: "normal", 
-      devices: { soil: null, pump: null }, 
-      isWatering: false,
-      updatedAt: new Date().toLocaleString() 
-    },
-    { 
-      id: 10, 
-      name: "Areca Palm", 
-      status: "fanning", 
-      devices: { soil: null, pump: null }, 
-      isWatering: false,
-      updatedAt: new Date().toLocaleString() 
-    },
-    { 
-      id: 11, 
-      name: "Bamboo", 
-      status: "normal",
-      devices: { soil: null, pump: null },
-      isWatering: false,
-      updatedAt: new Date().toLocaleString() 
-    },
-  ]);
-
-  // Set up initial device assignments
-  useEffect(() => {
-    updateDeviceAssignments();
-  }, []);
-
+const ManagePlant = () => {
+  interface Plant {
+    id: string;
+    type: string;
+    location: string;
+    status: string[];
+    limitWatering: number;
+    limitTemp: number;
+    pumpDeviceId?: number | Device;
+    soilDeviceId?: number | Device;
+    updatedAt: string;
+  }
   // State for search, editing, and pagination
   const [search, setSearch] = useState("");
   const [editingPlant, setEditingPlant] = useState<Plant | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [wateringDialogPlant, setWateringDialogPlant] = useState<Plant | null>(null);
-  const [isWateringDialogOpen, setIsWateringDialogOpen] = useState(false);
   const [noPumpErrorPlant, setNoPumpErrorPlant] = useState<Plant | null>(null);
   const [showNoPumpError, setShowNoPumpError] = useState(false);
   const [newPlant, setNewPlant] = useState<{ 
-    name: string; 
-    status: PlantStatus;
-    devices: DeviceAssignment;
+    type: string;
+    location: string;
+    limitWatering: number;
+    limitTemp: number;
+    status: string[]
+    pumpDevice?: number;
+    soilDevice?: number;
   }>({ 
-    name: "", 
-    status: "normal",
-    devices: { soil: null, pump: null },
+    type: "",
+    location: "",
+    limitWatering: 0,
+    limitTemp: 0,
+    status: ["normal"],
+    pumpDevice: undefined,
+    soilDevice: undefined,
   });
   const [currentPage, setCurrentPage] = useState(1);
-  const plantsPerPage = 7;
-  const [activeWateringPlant, setActiveWateringPlant] = useState<number | null>(null);
-  const [waterActionPlant, setWaterActionPlant] = useState<Plant | null>(null);
+  const plantsPerPage = 5;
+  const [usedPumpDevices, setUsedPumpDevices] = useState<Device[]>([]);
+  const [usedSoilDevices, setUsedSoilDevices] = useState<Device[]>([]);
+  const [waterActionPlant] = useState<Plant | null>(null);
+  const [wateringPlants, setWateringPlants] = useState<{ [plantId: string]: boolean }>({});
+  const [fanningPlants, setFanningPlants] = useState<{ [key: string]: boolean }>({});
   const [isWaterActionOpen, setIsWaterActionOpen] = useState(false);
+  const [soilDevice, setSoilDevice] = useState<number | undefined>(undefined);
+  const [pumpDevice, setPumpDevice] = useState<number | undefined>(undefined);
+  const [plants, setPlants] = useState<Plant[]>([]); // Khởi tạo là mảng trống
+  const [loading, setLoading] = useState(false);
+  const [devices, setDevices] = useState<{ soil: Device[]; pump: Device[], fan: Fan | null }>({
+    soil: [],
+    pump: [],
+    fan: null,
+  });
+  type Fan = {
+    _id: number;
+    devicetype: 'fan_level';
+    value?: 1 | 0;
+    actiondevice?: string; // ObjectId dạng string
+    timeAction?: string; // ISO date string
+  };
 
-  // Handle clicking on a status
-  const handleStatusClick = (plant: Plant) => {
-    if (plant.status === "watering") {
-      // Check for pump device before allowing watering action
-      if (!plant.devices.pump) {
-        // Show error dialog for missing pump
-        setNoPumpErrorPlant(plant);
-        setShowNoPumpError(true);
-      } else {
-        setWaterActionPlant(plant);
-        setIsWaterActionOpen(true);
-      }
+  const {controlFan, controlWatering} = useDeviceStore();
+
+  const fetchDevices = async () => {
+    try {
+      setLoading(true);
+      await useDeviceStore.getState().fetchAllDevices();
+  
+      const dedicatedDevices = useDeviceStore.getState().dedicatedDevices;
+      const sharedDevices = useDeviceStore.getState().sharedDevices
+  
+      const soilDevices = dedicatedDevices.filter(device => device.devicetype === "soil");
+      const pumpDevices = dedicatedDevices.filter(device => device.devicetype === "pump");
+      const fanDevice = sharedDevices.find(device => device.devicetype === "fan_level") as Fan | null;
+      setDevices({ soil: soilDevices, pump: pumpDevices, fan: fanDevice });
+    } catch (error: any) {
+      console.error("Lỗi khi lấy thiết bị dedicated:", error);
+      toast.error("Không thể lấy dữ liệu thiết bị.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Update device assignments
-  const updateDeviceAssignments = () => {
-    // Reset all device assignments
-    const updatedSoilDevices = soilDevices.map(device => ({ ...device, assignedTo: null as number | null }));
-    const updatedPumpDevices = pumpDevices.map(device => ({ ...device, assignedTo: null as number | null }));
-    
-    // Update assignments based on current plants
-    plants.forEach(plant => {
-      if (plant.devices.soil) {
-        const soilDevice = updatedSoilDevices.find(device => device.id === plant.devices.soil);
-        if (soilDevice) {
-          soilDevice.assignedTo = plant.id;
-        }
-      }
-      
-      if (plant.devices.pump) {
-        const pumpDevice = updatedPumpDevices.find(device => device.id === plant.devices.pump);
-        if (pumpDevice) {
-          pumpDevice.assignedTo = plant.id;
-        }
-      }
-    });
-    
-    setSoilDevices(updatedSoilDevices);
-    setPumpDevices(updatedPumpDevices);
-  };
 
+  const {addPlant } = usePlantStore();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+  
+        const plantsRes = await apiGetAllPlants();
+        const fetchedPlants = plantsRes.data?.data;
+  
+        if (Array.isArray(fetchedPlants)) {
+          const normalizedPlants = fetchedPlants.map(p => ({
+            ...p,
+            id: p._id,
+            updatedAt: new Date(p.updatedAt).toLocaleString('vi-VN', {
+              timeZone: 'Asia/Ho_Chi_Minh',
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+            }),
+            devices: {
+              pump: p.pumpDeviceId,
+              soil: p.soilDeviceId,
+            }
+          }));
+          setPlants(normalizedPlants);
+        } else {
+          console.error("Dữ liệu cây không hợp lệ từ API:", plantsRes);
+          toast.error("Dữ liệu cây không hợp lệ.");
+        }
+  
+        // Fetch device sau
+        await fetchDevices();
+        
+      } catch (error: any) {
+        console.error("Chi tiết lỗi:", error);
+        toast.error("Không thể lấy dữ liệu cây.");
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    if (plants.length > 0 && devices?.soil?.length > 0 && devices?.pump?.length > 0) {
+      const usedSoilDevices = plants
+        .map(p => p.soilDeviceId)
+        .filter((device): device is Device => typeof device === 'object' && device !== null);
+  
+      const usedPumpDevices = plants
+        .map(p => p.pumpDeviceId)
+        .filter((device): device is Device => typeof device === 'object' && device !== null);
+  
+      setUsedSoilDevices(usedSoilDevices);
+      setUsedPumpDevices(usedPumpDevices);
+    }
+  }, [plants, devices]);
+  
+  // Tính toán available devices (chỉ tính khi plants hoặc devices thay đổi)
+const availableSoilDevices = devices.soil.filter(device => 
+  !usedSoilDevices.some(used => used._id === device._id) ||
+  device._id === newPlant.soilDevice // vẫn show cái device đã chọn trong newPlant
+);
+
+const availablePumpDevices = devices.pump.filter(device => 
+  !usedPumpDevices.some(used => used._id === device._id) ||
+  device._id === newPlant.pumpDevice
+);
+
+
+    // Handle cl"icking on a status
+  const handleDeviceControl = (device: Device, value: number) => {
+      if (device.status === "deactive") return;
+      
+      try {
+        switch (device.devicetype) {
+          case "fan_level":
+            if (value == 1)
+            controlFan(device._id, 50);
+          else controlFan(device._id, 0);
+            break;
+          case "pump":
+            controlWatering(device._id, value);
+            break;
+        }
+      } catch (error) {
+        console.error(`Failed to control ${device.devicetype}:`, error);
+      }
+    };
+
+  const handleStatusClick = (plant: Plant, status: string) => {
+    const isCurrentlyWatering = wateringPlants[plant.id] || false;
+    const newStatus = !isCurrentlyWatering; // Đảo ngược trạng thái
+
+    const fanStatus = fanningPlants[plant.id] || false;
+    const newFanStatus = !fanStatus
+
+    // Check if status includes watering
+    if (status === "watering") {
+
+      if (!plant.pumpDeviceId) {
+        setNoPumpErrorPlant(plant);
+        setShowNoPumpError(true);
+      } 
+      else {
+          if (typeof plant.pumpDeviceId === "object") {
+            handleDeviceControl(plant.pumpDeviceId, newStatus ? 1 : 0);
+            setWateringPlants(prev => ({
+              ...prev,
+              [plant.id]: newStatus,
+            }));
+          } else {
+            console.error("Invalid pumpDeviceId: Expected a number.");
+          }
+      }
+    }
+
+    else if (status === "fanning") {
+      if (devices.fan) {
+        if (devices.fan?.value !== undefined) {
+          handleDeviceControl(devices.fan as Device, newFanStatus ? 1 : 0);
+        // Cập nhật lại trạng thái của cây trong fanningPlants
+        setFanningPlants((prev) => ({
+          ...prev,
+          [plant.id]: newFanStatus, // Cập nhật trạng thái mới
+        }));
+      } else {
+        console.error("Fan device value is undefined.");
+      }
+    } else {
+      console.error("No fan device available.");
+    }
+  }
+};
+  
   // Filter plants based on search and pagination
-  const filteredPlants = plants.filter(plant => 
-    plant.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredPlants = plants.filter(
+    (plant) =>
+      plant.type &&
+      plant.type.toLowerCase().includes(search.toLowerCase())
+  )
   
   const totalPages = Math.ceil(filteredPlants.length / plantsPerPage);
   
@@ -259,107 +283,6 @@ const ManagePlant: React.FC = () => {
     (currentPage - 1) * plantsPerPage, 
     currentPage * plantsPerPage
   );
-
-  // Get available devices (not assigned to any plant)
-  const getAvailableSoilDevices = (currentPlantId?: number) => {
-    return soilDevices.filter(device => 
-      device.assignedTo === null || device.assignedTo === currentPlantId
-    );
-  };
-
-  const getAvailablePumpDevices = (currentPlantId?: number) => {
-    return pumpDevices.filter(device => 
-      device.assignedTo === null || device.assignedTo === currentPlantId
-    );
-  };
-
-  // Add a new plant
-  const handleAddPlant = () => {
-    if (!newPlant.name.trim()) return;
-    
-    const newId = plants.length > 0 
-      ? Math.max(...plants.map(p => p.id)) + 1 
-      : 1;
-    
-    const updatedPlants = [
-      ...plants, 
-      { 
-        id: newId, 
-        name: newPlant.name.trim(), 
-        status: newPlant.status,
-        devices: newPlant.devices,
-        isWatering: false,
-        updatedAt: new Date().toLocaleString() 
-      }
-    ];
-    
-    setPlants(updatedPlants);
-    
-    // Reset form
-    setNewPlant({ 
-      name: "", 
-      status: "normal",
-      devices: { soil: null, pump: null },
-    });
-    
-    // Update device assignments
-    setTimeout(() => updateDeviceAssignments(), 0);
-  };
-
-  // Remove a plant
-  const handleDeletePlant = (id: number) => {
-    setPlants(plants.filter(plant => plant.id !== id));
-    
-    // Adjust current page if necessary
-    if (currentPlants.length === 1 && currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-    
-    // Update device assignments
-    setTimeout(() => updateDeviceAssignments(), 0);
-  };
-
-  // Update a plant
-  const handleUpdatePlant = () => {
-    if (!editingPlant) return;
-    
-    setPlants(plants.map(plant => 
-      plant.id === editingPlant.id 
-        ? { ...editingPlant, updatedAt: new Date().toLocaleString() } 
-        : plant
-    ));
-    
-    setIsEditDialogOpen(false);
-    setEditingPlant(null);
-    
-    // Update device assignments
-    setTimeout(() => updateDeviceAssignments(), 0);
-  };
-
-  // Toggle watering for a plant
-  const toggleWatering = (plant: Plant) => {
-    if (plant.status === "watering") {
-      if (!plant.devices.pump) {
-        // Show error dialog for missing pump
-        setNoPumpErrorPlant(plant);
-        setShowNoPumpError(true);
-        return;
-      }
-
-      setPlants(plants.map(p => 
-        p.id === plant.id 
-          ? { ...p, isWatering: !p.isWatering, updatedAt: new Date().toLocaleString() } 
-          : p
-      ));
-
-      // If starting watering, set active watering plant
-      if (!plant.isWatering) {
-        setActiveWateringPlant(plant.id);
-      } else {
-        setActiveWateringPlant(null);
-      }
-    }
-  };  
 
   // Handle pagination
   const handlePrevPage = () => {
@@ -374,20 +297,131 @@ const ManagePlant: React.FC = () => {
     }
   };
 
-  // Get status color
-  const getStatusColor = (status: PlantStatus, isWatering: boolean) => {
-    switch (status) {
-      case "normal":
-        return "bg-green-100 text-green-800";
-      case "watering":
-        return isWatering ? "bg-red-400 text-white" : "bg-blue-100 text-blue-800";
-      case "fanning":
-        return "bg-purple-100 text-purple-800";   
+  const getAvailableSoilDevices = (currentPlantId: string): Device[] => {
+    const assignedSoilIds = plants
+      .filter(p => p.id !== currentPlantId && p.soilDeviceId)
+      .map(p => p.soilDeviceId);
+  
+    return devices.soil.filter((device) => !assignedSoilIds.includes(device._id));
+  };
+  
+
+  const getAvailablePumpDevices = (currentPlantId: string): Device[] => {
+    const assignedPumpIds = plants
+      .filter(p => p.id !== currentPlantId && p.pumpDeviceId)
+      .map(p => p.pumpDeviceId); // Lấy _id từ device
+  
+    return devices.pump.filter((device) => !assignedPumpIds.includes(device._id));
+  };
+  
+
+  // Add a new plant with API
+  const handleAddPlant = async () => {
+    if (!newPlant.type.trim()) return;    
+    try {
+      setLoading(true);
+
+      const plantData = {
+        type: newPlant.type.trim(),
+        location: newPlant.location.trim(),
+        limitWatering: newPlant.limitWatering,
+        limitTemp: newPlant.limitTemp,
+        status: newPlant.status,
+        pumpDeviceId: pumpDevice,
+        soilDeviceId: soilDevice,
+      };
+      console.log(plantData)
+      const response = await addPlant(plantData); // Call the addPlant function from the store
+      
+ 
+      if (response) {
+        // Add new plant to local 
+        
+        window.location.reload();
+        toast.success("Plant has been added successfully");
+        // Reset form
+        setNewPlant({ 
+          type: "",   
+          status: ["normal"],                               
+          location: "",
+          limitWatering: 0,
+          limitTemp: 0,
+          pumpDevice: undefined,
+          soilDevice: undefined,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to add plant:', error);
+      toast.error("Failed to add plant");
+    } finally {
+      setLoading(false);
     }
   };
 
+  // Remove a plant with API
+  const handleDeletePlant = async (id: string): Promise<void> => {
+    try {
+      setLoading(true);
+      await apiDeletePlantByID(id);
+      
+      
+      // Remove from local state
+      setPlants(plants.filter(plant => plant.id !== id));
+      window.location.reload();
+      toast.success("Plant has been deleted successfully");
+      
+      // Adjust current page if necessary
+      if (currentPlants.length === 1 && currentPage > 1) {
+        setCurrentPage(currentPage - 1);
+      }
+
+      
+    } catch (error) {
+      console.error('Failed to delete plant:', error);
+      toast.error("Failed to delete plant");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Update a plant with API
+  const handleUpdatePlant = async () => {
+    if (!editingPlant) return;
+    
+    try {
+      setLoading(true);
+      const response = await apiUpdatePlantByID(editingPlant.id, editingPlant );
+      
+      
+      if (response.data) {
+        // Update in local state
+        setPlants(plants.map(plant => 
+          plant.id === editingPlant.id ? response.data : plant
+        ));
+        window.location.reload();
+        toast.success("Plant has been updated successfully");
+      }
+      
+      setIsEditDialogOpen(false);
+      setEditingPlant(null);
+    } catch (error) {
+      console.error('Failed to update plant:', error);
+      toast.error("Failed to update plant");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  
+
+  // Check if plant is actively watering - FIXED: Added null check
+  const isPlantWatering = (plant: Plant | null) => {
+    if (!plant) return false; // Check if plant is null
+    return plant.status.includes("watering");
+  };
+
   // Get status icon
-  const getStatusIcon = (status: PlantStatus) => {
+  const getStatusIcon = (status: string) => {
     switch (status) {
       case "normal":
         return <Leaf className="h-4 w-4" />;
@@ -397,35 +431,56 @@ const ManagePlant: React.FC = () => {
         return <Fan className="h-4 w-4" />;   
     }
   };
-
   // Render device badges
   const renderDeviceBadges = (plant: Plant) => {
     return (
       <div className="flex flex-wrap gap-1">
-        {plant.devices.soil && 
+        {plant.soilDeviceId && 
           <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-200">
-            {soilDevices.find(d => d.id === plant.devices.soil)?.name || "Soil"}
+            {typeof plant.soilDeviceId === "object" && plant.soilDeviceId.name}
           </Badge>
         }
-        {plant.devices.pump && 
+        {plant.pumpDeviceId && 
           <Badge variant="outline" className="bg-blue-50 text-blue-800 border-blue-200">
-            {pumpDevices.find(d => d.id === plant.devices.pump)?.name || "Pump"}
+            {typeof plant.pumpDeviceId === "object" && plant.pumpDeviceId.name}
           </Badge>
         }
       </div>
     );
   };
 
-  // Get device name by ID
-  const getDeviceName = (deviceType: "soil" | "pump", deviceId: string | null) => {
-    if (!deviceId) return "";
-    
-    if (deviceType === "soil") {
-      return soilDevices.find(d => d.id === deviceId)?.name || "";
-    } else {
-      return pumpDevices.find(d => d.id === deviceId)?.name || "";
+  async function toggleWatering(plant: Plant | null) {
+    if (!plant) return;
+
+    try {
+      setLoading(true);
+
+      // Determine the new status
+      const isCurrentlyWatering = plant.status.includes("watering");
+
+      const response = await apiUpdatePlantByID(plant.id, plant);
+
+      if (response.data) {
+        // Update the plant in the local state
+        setPlants((prevPlants) =>
+          prevPlants.map((p) =>
+            p.id === plant.id ? response.data : p
+          )
+        );
+
+        toast.success(
+          isCurrentlyWatering
+            ? "Watering has been stopped successfully."
+            : "Watering has been started successfully."
+        );
+      }
+    } catch (error) {
+      console.error("Failed to toggle watering:", error);
+      toast.error("Failed to toggle watering.");
+    } finally {
+      setLoading(false);
     }
-  };
+  }
 
   return (
     <div className="container mx-auto p-6">
@@ -452,13 +507,25 @@ const ManagePlant: React.FC = () => {
             <div className="flex items-center space-x-4">
               <Input
                 placeholder="Enter new plant name..."
-                value={newPlant.name}
-                onChange={(e) => setNewPlant({ ...newPlant, name: e.target.value })}
+                value={newPlant.type}
+                onChange={(e) => setNewPlant({ ...newPlant, type: e.target.value })}
                 className="flex-1"
               />
+
+              {/* Vị trí cây */}
+              <Input
+                placeholder="Enter location..."
+                value={newPlant.location}
+                onChange={(e) => setNewPlant({ ...newPlant, location: e.target.value })}
+                className="flex-1"
+              />
+
               <Select
-                value={newPlant.status}
-                onValueChange={(value: PlantStatus) => setNewPlant({ ...newPlant, status: value })}
+                value={newPlant.status.length > 0 ? newPlant.status[0] : "normal"}
+                onValueChange={(value) => {
+                  const statusArray = value === "normal" ? ["normal"] : [value];
+                  setNewPlant({ ...newPlant, status: statusArray });
+                }}
               >
                 <SelectTrigger className="w-32">
                   <SelectValue placeholder="Status" />
@@ -469,7 +536,13 @@ const ManagePlant: React.FC = () => {
                   <SelectItem value="fanning">Fanning</SelectItem>
                 </SelectContent>
               </Select>
-              <Button onClick={handleAddPlant} className="bg-green-600 hover:bg-green-700">Add</Button>
+              <Button 
+                onClick={handleAddPlant} 
+                className="bg-green-600 hover:bg-green-700"
+                disabled={loading || !newPlant.type.trim()}
+              >
+                {loading ? "Adding..." : "Add"}
+              </Button>
             </div>
 
             {/* Device selection for new plant */}
@@ -477,12 +550,13 @@ const ManagePlant: React.FC = () => {
               <div className="flex items-center space-x-2">
                 <label className="w-16 font-medium">Soil:</label>
                 <Select
-                  value={newPlant.devices.soil || "none"}
+                  value={newPlant.soilDevice ? String(newPlant.soilDevice) : "none"}
                   onValueChange={(value) => {
                     setNewPlant({
                       ...newPlant,
-                      devices: { ...newPlant.devices, soil: value === "none" ? null : value },
+                      soilDevice: value === "none" ? undefined : Number(value),
                     });
+                    setSoilDevice(value === "none" ? undefined : Number(value));
                   }}
                 >
                   <SelectTrigger className="w-full">
@@ -490,8 +564,8 @@ const ManagePlant: React.FC = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">None</SelectItem>
-                    {getAvailableSoilDevices().map((device) => (
-                      <SelectItem key={device.id} value={device.id}>
+                    {availableSoilDevices.map((device) => (
+                      <SelectItem key={device._id} value={String(device._id)}>
                         {device.name}
                       </SelectItem>
                     ))}
@@ -501,12 +575,13 @@ const ManagePlant: React.FC = () => {
               <div className="flex items-center space-x-2">
                 <label className="w-16 font-medium">Pump:</label>
                 <Select
-                  value={newPlant.devices.pump || "none"}
+                  value={newPlant.pumpDevice ? String(newPlant.pumpDevice) : "none"}
                   onValueChange={(value) => {
                     setNewPlant({
                       ...newPlant,
-                      devices: { ...newPlant.devices, pump: value === "none" ? null : value },
+                      pumpDevice: value === "none" ? undefined : Number(value),
                     });
+                    setPumpDevice(value === "none" ? undefined : Number(value));
                   }}
                 >
                   <SelectTrigger className="w-full">
@@ -514,8 +589,8 @@ const ManagePlant: React.FC = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">None</SelectItem>
-                    {getAvailablePumpDevices().map((device) => (
-                      <SelectItem key={device.id} value={device.id}>
+                    {availablePumpDevices.map((device) => (
+                      <SelectItem key={device._id} value={String(device._id)}>
                         {device.name}
                       </SelectItem>
                     ))}
@@ -533,13 +608,20 @@ const ManagePlant: React.FC = () => {
                   <TableHead className="w-12 text-center">No.</TableHead>
                   <TableHead>Plant Name</TableHead>
                   <TableHead className="w-24 text-center">Status</TableHead>
+                  <TableHead>Location</TableHead>
                   <TableHead>Devices</TableHead>
                   <TableHead>Last Updated</TableHead>
                   <TableHead className="w-32 text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {currentPlants.length > 0 ? (
+                {loading && plants.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-4">
+                      Loading plants data...
+                    </TableCell>
+                  </TableRow>
+                ) : currentPlants.length > 0 ? (
                   currentPlants.map((plant, index) => (
                     <TableRow key={plant.id}>
                       <TableCell className="text-center font-medium">
@@ -547,27 +629,45 @@ const ManagePlant: React.FC = () => {
                       </TableCell>
                       <TableCell className="font-medium flex items-center gap-2">
                         <Leaf className="h-5 w-5 text-green-600" />
-                        {plant.name}
+                        {plant.type}
                       </TableCell>
                       <TableCell className="text-center">
-                        <span 
-                          className={`px-2 py-1 rounded-full text-xs flex items-center justify-center gap-1 ${getStatusColor(plant.status, plant.isWatering)} ${plant.status === "watering" ? "cursor-pointer hover:bg-blue-200" : ""}`}
-                          onClick={() => handleStatusClick(plant)}
-                        >
-                          {getStatusIcon(plant.status)}
-                          {plant.status}
-                          {plant.isWatering && <span className="animate-pulse">•</span>}
-                        </span>
+                        <div className="flex gap-2 justify-center">
+                          {plant.status.includes("watering") && (
+                            <span
+                            className={`px-2 py-1 rounded-full text-xs flex items-center justify-center gap-1
+                              ${wateringPlants[plant.id] ? "bg-blue-400 text-white" : "bg-blue-100 text-blue-800"}
+                              cursor-pointer hover:bg-blue-200`}
+                              onClick={() => handleStatusClick(plant, "watering")}
+                            >
+                              {getStatusIcon("watering")} Watering
+                            </span>
+                          )}
+                          {plant.status.includes("fanning") && (
+                            <span
+                            className={`px-2 py-1 rounded-full text-xs flex items-center justify-center gap-1
+                              ${fanningPlants[plant.id] ? "bg-purple-200 text-purple-900" : "bg-purple-100 text-purple-800"}
+                              cursor-pointer hover:bg-purple-200`}
+                              onClick={() => handleStatusClick(plant, "fanning")}
+                            >
+                              {getStatusIcon("fanning")} Fanning
+                            </span>
+                          )}
+                          {/* Nếu có thêm trạng thái, tiếp tục thêm các div tương tự */}
+                        </div>
                       </TableCell>
+                      <TableCell>{plant.location || 'N/A'}</TableCell> 
+
                       <TableCell>
                         {renderDeviceBadges(plant)}
                       </TableCell>
-                      <TableCell>{plant.updatedAt}</TableCell>
+                      <TableCell>{plant.updatedAt || 'N/A'}</TableCell>
                       <TableCell>
                         <div className="flex items-center justify-center gap-2">
                           <Button 
                             variant="outline" 
                             size="icon"
+                            disabled={loading}
                             onClick={() => {
                               setEditingPlant({...plant});
                               setIsEditDialogOpen(true);
@@ -578,7 +678,12 @@ const ManagePlant: React.FC = () => {
                           
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <Button variant="outline" size="icon" className="text-red-500">
+                              <Button 
+                                variant="outline" 
+                                size="icon" 
+                                className="text-red-500"
+                                disabled={loading}
+                              >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </AlertDialogTrigger>
@@ -586,7 +691,7 @@ const ManagePlant: React.FC = () => {
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Confirm deletion?</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  Are you sure you want to delete the plant "{plant.name}"? This action cannot be undone.
+                                  Are you sure you want to delete the plant "{plant.type}"? This action cannot be undone.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
@@ -621,7 +726,7 @@ const ManagePlant: React.FC = () => {
               <Button 
                 variant="outline" 
                 onClick={handlePrevPage} 
-                disabled={currentPage === 1}
+                disabled={currentPage === 1 || loading}
               >
                 Previous Page
               </Button>
@@ -631,7 +736,7 @@ const ManagePlant: React.FC = () => {
               <Button 
                 variant="outline" 
                 onClick={handleNextPage} 
-                disabled={currentPage === totalPages || totalPages === 0}
+                disabled={currentPage === totalPages || totalPages === 0 || loading}
               >
                 Next Page
               </Button>
@@ -652,27 +757,94 @@ const ManagePlant: React.FC = () => {
                 <label className="text-right">Plant Name</label>
                 <Input 
                   className="col-span-3" 
-                  value={editingPlant.name}
-                  onChange={(e) => setEditingPlant({...editingPlant, name: e.target.value})}
+                  value={editingPlant.type}
+                  onChange={(e) => setEditingPlant({...editingPlant, type: e.target.value})}
+                />
+                <label className="text-right">Location</label>
+                <Input 
+                  className="col-span-3" 
+                  value={editingPlant.location}
+                  onChange={(e) => setEditingPlant({...editingPlant, location: e.target.value})}
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <label className="text-right">Status</label>
-                <Select 
-                  value={editingPlant.status} 
-                  onValueChange={(value: PlantStatus) => 
-                    setEditingPlant({...editingPlant, status: value})
-                  }
-                >
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="normal">Normal</SelectItem>
-                    <SelectItem value="watering">Watering</SelectItem>
-                    <SelectItem value="fanning">Fanning</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="col-span-3 flex flex-wrap gap-2">
+                  <div className="flex items-center space-x-2">
+                    <input 
+                      type="checkbox" 
+                      id="normal-status"
+                      checked={editingPlant.status.includes("normal")}
+                      onChange={(e) => {
+                        let newStatus = [...editingPlant.status];
+                        if (e.target.checked) {
+                          // Add normal, ensure it's the only one if checked
+                          newStatus = ["normal"];
+                        } else {
+                          // Remove normal, add "watering" if no status remains
+                          newStatus = newStatus.filter(s => s !== "normal");
+                          if (newStatus.length === 0) {
+                            newStatus = ["watering"];
+                          }
+                        }
+                        setEditingPlant({...editingPlant, status: newStatus});
+                      }}
+                    />
+                    <label htmlFor="normal-status">Normal</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input 
+                      type="checkbox" 
+                      id="watering-status"
+                      checked={editingPlant.status.includes("watering")}
+                      onChange={(e) => {
+                        let newStatus = [...editingPlant.status];
+                        if (e.target.checked) {
+                          // Add watering, remove normal if present
+                          if (!newStatus.includes("watering")) {
+                            newStatus.push("watering");
+                          }
+                          newStatus = newStatus.filter(s => s !== "normal");
+                        } else {
+                          // Remove watering
+                          newStatus = newStatus.filter(s => s !== "watering");
+                          // If empty, set to normal
+                          if (newStatus.length === 0) {
+                            newStatus = ["normal"];
+                          }
+                        }
+                        setEditingPlant({...editingPlant, status: newStatus});
+                      }}
+                    />
+                    <label htmlFor="watering-status">Watering</label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input 
+                      type="checkbox" 
+                      id="fanning-status"
+                      checked={editingPlant.status.includes("fanning")}
+                      onChange={(e) => {
+                        let newStatus = [...editingPlant.status];
+                        if (e.target.checked) {
+                          // Add fanning, remove normal if present
+                          if (!newStatus.includes("fanning")) {
+                            newStatus.push("fanning");
+                          }
+                          newStatus = newStatus.filter(s => s !== "normal");
+                        } else {
+                          // Remove fanning
+                          newStatus = newStatus.filter(s => s !== "fanning");
+                          // If empty, set to normal
+                          if (newStatus.length === 0) {
+                            newStatus = ["normal"];
+                          }
+                        }
+                        setEditingPlant({...editingPlant, status: newStatus});
+                      }}
+                    />
+                    <label htmlFor="fanning-status">Fanning</label>
+                  </div>
+                </div>
               </div>
               <div className="pt-2">
                 <label className="font-medium mb-2 block">Assign Devices</label>
@@ -680,11 +852,11 @@ const ManagePlant: React.FC = () => {
                   <div className="flex items-center space-x-2">
                     <label className="text-sm w-16">Soil:</label>
                     <Select
-                      value={editingPlant.devices.soil || "none"}
+                      value={editingPlant.soilDeviceId !== undefined ? String(editingPlant.soilDeviceId): "none"}
                       onValueChange={(value) => {
                         setEditingPlant({
                           ...editingPlant,
-                          devices: { ...editingPlant.devices, soil: value === "none" ? null : value },
+                          soilDeviceId: value === "none" ? undefined : Number(value),
                         });
                       }}
                     >
@@ -694,7 +866,7 @@ const ManagePlant: React.FC = () => {
                       <SelectContent>
                         <SelectItem value="none">None</SelectItem>
                         {getAvailableSoilDevices(editingPlant.id).map((device) => (
-                          <SelectItem key={device.id} value={device.id}>
+                          <SelectItem key={device._id} value={String(device._id)}>
                             {device.name}
                           </SelectItem>
                         ))}
@@ -704,11 +876,11 @@ const ManagePlant: React.FC = () => {
                   <div className="flex items-center space-x-2">
                     <label className="text-sm w-16">Pump:</label>
                     <Select
-                      value={editingPlant.devices.pump || "none"}
+                      value={editingPlant.pumpDeviceId !== undefined ? String(editingPlant.pumpDeviceId): "none"}
                       onValueChange={(value) => {
                         setEditingPlant({
                           ...editingPlant,
-                          devices: { ...editingPlant.devices, pump: value === "none" ? null : value },
+                          pumpDeviceId: value === "none" ? undefined : Number(value),
                         });
                       }}
                     >
@@ -718,7 +890,7 @@ const ManagePlant: React.FC = () => {
                       <SelectContent>
                         <SelectItem value="none">None</SelectItem>
                         {getAvailablePumpDevices(editingPlant.id).map((device) => (
-                          <SelectItem key={device.id} value={device.id}>
+                          <SelectItem key={device._id} value={String(device._id)}>
                             {device.name}
                           </SelectItem>
                         ))}
@@ -730,10 +902,12 @@ const ManagePlant: React.FC = () => {
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} disabled={loading}>
               Cancel
             </Button>
-            <Button onClick={handleUpdatePlant}>Save Changes</Button>
+            <Button onClick={handleUpdatePlant} disabled={loading}>
+              {loading ? "Saving..." : "Save Changes"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -751,10 +925,10 @@ const ManagePlant: React.FC = () => {
             {waterActionPlant && (
               <div className="text-center space-y-4">
                 <p>
-                  Do you want to {waterActionPlant.isWatering ? "stop watering" : "water"} <span className="font-semibold">{waterActionPlant.name}</span>?
+                  Do you want to {waterActionPlant?.status.includes("watering") ? "stop watering" : "water"} <span className="font-semibold">{waterActionPlant?.type}</span>?
                 </p>
                 <p className="text-sm text-gray-500">
-                  Using pump device: {getDeviceName("pump", waterActionPlant.devices.pump)}
+                  Using pump device: {waterActionPlant.pumpDeviceId ? (typeof waterActionPlant.pumpDeviceId === "object" ? waterActionPlant.pumpDeviceId.name || "Unknown" : waterActionPlant.pumpDeviceId) : "Unknown"}
                 </p>
               </div>
             )}
@@ -767,11 +941,12 @@ const ManagePlant: React.FC = () => {
                 }
                 setIsWaterActionOpen(false);
               }}
-              className={waterActionPlant?.isWatering ? "bg-red-500 hover:bg-red-600" : "bg-blue-500 hover:bg-blue-600"}
+              className={waterActionPlant?.status.includes("watering") ? "bg-red-500 hover:bg-red-600" : "bg-blue-500 hover:bg-blue-600"}
+              disabled={loading}
             >
-              {waterActionPlant?.isWatering ? "Stop Watering" : "Start Watering"}
+              {loading ? "Processing..." : (isPlantWatering(waterActionPlant!) ? "Stop Watering" : "Start Watering")}
             </Button>
-            <Button variant="outline" onClick={() => setIsWaterActionOpen(false)}>
+            <Button variant="outline" onClick={() => setIsWaterActionOpen(false)} disabled={loading}>
               Cancel
             </Button>
           </DialogFooter>
@@ -790,10 +965,10 @@ const ManagePlant: React.FC = () => {
               {noPumpErrorPlant && (
                 <div className="text-center py-4">
                   <p>
-                    Cây <span className="font-semibold">{noPumpErrorPlant.name}</span> Cannot water plant because it doesn't have a pump.
+                    Cây <span className="font-semibold">{noPumpErrorPlant.type}</span> không thể tưới nước vì không có thiết bị bơm.
                   </p>
                   <p className="mt-2">
-                  Please assign a pump to this plant before performing the watering action.
+                    Vui lòng gán một thiết bị bơm cho cây này trước khi thực hiện tưới nước.
                   </p>
                 </div>
               )}
@@ -813,4 +988,5 @@ const ManagePlant: React.FC = () => {
     </div>
   );
 }
+
 export default ManagePlant;

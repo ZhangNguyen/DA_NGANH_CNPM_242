@@ -25,10 +25,12 @@ export const apiCreatePlantBy = (plantProps: IPlantProps) => axios({
     data: plantProps
 })
 
-export const apiUpdatePlantByID = (plantID: string) => axios({
+export const apiUpdatePlantByID = (plantID: string, plantData: any) => axios({
     url: `/api/plants/${plantID}`,
-    method: 'PUT'
-})
+    method: 'PUT',
+    data: plantData, 
+  });
+  
 
 export const apiDeletePlantByID = (plantID: string) => axios({
     url: `/api/plants/${plantID}`,
