@@ -212,7 +212,9 @@ const availablePumpDevices = devices.pump.filter(device =>
       try {
         switch (device.devicetype) {
           case "fan_level":
-            controlFan(device._id, value);
+            if (value == 1)
+            controlFan(device._id, 50);
+          else controlFan(device._id, 0);
             break;
           case "pump":
             controlWatering(device._id, value);
