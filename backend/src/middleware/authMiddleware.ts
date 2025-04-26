@@ -29,7 +29,6 @@ const authMiddlewareClient = (req: Request, res: Response, next: NextFunction) =
                     }
                 }
                 req.user = decoded;
-                console.log(req.user);
                 next();
             } catch (error) {
                 return res.status(500).json({ message: 'Internal server error' });

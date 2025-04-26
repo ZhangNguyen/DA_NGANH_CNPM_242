@@ -6,13 +6,13 @@ const jwt = require('jsonwebtoken');
 let io: Server;
 
 export function initSocket(server: any) {
-//   io = new Server(server, {
-//     cors: {
-//       origin: FRONTEND_URL, // tùy chỉnh domain frontend
-//       methods: ["GET", "POST"]
-//     }
-//   });
-  io = new Server(server);
+  io = new Server(server, {
+    cors: {
+      origin: "http://localhost:5173", // tùy chỉnh domain frontend
+      methods: ["GET", "POST"]
+    }
+  });
+  // io = new Server(server);
   io.use((socket,next) =>
 {
     const token = socket.handshake.auth.token;

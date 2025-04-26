@@ -124,8 +124,6 @@ export class PlantStatusObserver implements SensorObserver {
         await Plant.findByIdAndUpdate(plant._id, { status: arr_status });
       }
     }));
-    console.log(userId);
-    console.log("OKE LA")
     console.log(changedPlants);
 
     if (changedPlants.length > 0) {
