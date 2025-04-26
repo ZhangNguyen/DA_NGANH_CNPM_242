@@ -55,7 +55,6 @@ const fetchSensorDataAdafruit = async (adafruitUsername: string, adafruitKey: st
     try {
       // Lấy danh sách feed tự động
       const feedMappings = await fetchFeedListFromAdafruit(adafruitUsername, adafruitKey);
-      console.log("OK");
       if (!feedMappings || feedMappings.length === 0) {
         return { status: 'error', message: 'No feeds found on Adafruit IO' };
       }

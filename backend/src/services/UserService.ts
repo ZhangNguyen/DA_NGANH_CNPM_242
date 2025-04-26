@@ -51,7 +51,6 @@ const loginUser = (userLogin: any) => {
         const {email,password} = userLogin;
         try{
             const checkUser = await User.findOne({email:email});
-            console.log(checkUser)
 
             if(!checkUser)
             {

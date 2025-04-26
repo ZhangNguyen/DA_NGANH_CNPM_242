@@ -3,12 +3,12 @@ import axios from "./axios"
 // DEDICATED DEVICES
 export const apiGetAllDedicatedDevice = () => axios({
     url: '/api/dedicated',
-    method: 'GET'
+    method: 'GET',
 })
 
 export const apiGetDedicatedDeviceByID = (deviceID: number) => axios({
     url: `/api/dedicated/${deviceID}`,
-    method: 'Get'
+    method: 'GET'
 })
 
 // SHARED DEVICE
@@ -19,5 +19,5 @@ export const apiGetAllSharedDevice = () => axios({
 
 export const apiGetSharedDeviceByID = (deviceID: number) => axios({
     url: `/api/shared/${deviceID}`,
-    method: 'Get'
+    method: 'GET'
 })

@@ -5,4 +5,3 @@ backend: npm run dev
 backend: The next time run :
         docker ps -a 
         docker start (name)
-        

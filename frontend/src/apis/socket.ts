@@ -9,5 +9,6 @@ export const socket = io(SOCKET_URL,{
   auth: {
     token: useUserStore.getState().accessToken 
   },
+  withCredentials: true,
   transports: ['websocket']
 });

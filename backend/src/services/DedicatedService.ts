@@ -4,11 +4,7 @@ import User from "../models/UserModel";
 export const fetchDevicesFromAdafruit = async (user: any) => {
     try{
     const { adafruit_username, adafruit_key } = user;
-    const res = await axios.get(`https://io.adafruit.com/api/v2/${adafruit_username}/feeds`, {
-        headers: {
-          "X-AIO-Key": adafruit_key
-        }
-      });
+    const res = await axios.get(`https://io.adafruit.com/api/v2/${adafruit_username}/feeds`);
     const feeds = res.data;
     for (const feed of feeds) {
         let type: string | null = null;
@@ -49,9 +45,9 @@ export const fetchDevicesFromAdafruit = async (user: any) => {
 
 export const getDevicesByUser = async (user: any) => {
     try{
-    await fetchDevicesFromAdafruit(user);
-    const devices = await DedicatedDevice.find({ user: user.id });
-    return devices;
+      // await fetchDevicesFromAdafruit(user);
+      const devices = await DedicatedDevice.find({ user: user.id });
+      return devices;
   }
   catch (error: any) {
     console.error('❌ Error in getDevicesByUser:', error.message);

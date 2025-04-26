@@ -5,11 +5,12 @@ import DedicatedDevice from "../../models/DedicatedDevice";
 export class SaveToDbObserver implements SensorObserver {
   async update(sensor: any): Promise<void> {
     try {
+      console.log("Start to update");
       if (!sensor?.type || !sensor?.user) {
         console.warn("❗ Thiếu dữ liệu sensor hoặc user");
         return;
       }
-
+      console.log(sensor);
       // Nếu là sensor thường: humidity, temperature, light
       if (["humidity", "temperature", "light"].includes(sensor.type)) {
         await Sensor.findOneAndUpdate(
@@ -25,9 +26,9 @@ export class SaveToDbObserver implements SensorObserver {
       }
 
       // Nếu là thiết bị soil
-      if (sensor.type === "soil") {
+      if (sensor.devicetype === "soil") {
         await DedicatedDevice.findOneAndUpdate(
-          { _id: sensor._id, type: "soil" },
+          { _id: sensor._id, devicetype: "soil" },
           {
             $set: {
               value: parseFloat(sensor.value),

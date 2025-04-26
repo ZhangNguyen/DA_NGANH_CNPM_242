@@ -29,7 +29,7 @@ const getAllPlantsController = async (req: Request, res: Response) => {
 }
 const getPlantByIdController = async (req: Request, res: Response) => {
     try {
-        const result = await getPlantById(req.params.plantId, req.user);
+        const result = await getPlantById(req.params.id, req.user);
         return res.status(200).json(result);
     } catch (error: any) {
         return res.status(404).json({ message: error.message });
