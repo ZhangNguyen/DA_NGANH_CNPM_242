@@ -6,10 +6,9 @@ import axios, {
 import { apiGetRefreshToken } from './auth';
 import { useUserStore } from '@/store/useUserStore'
 
-// wss://1391-2001-ee0-5214-8b50-9018-5733-4618-fff2.ngrok-free.app
 const baseConfig: CreateAxiosDefaults = {
     baseURL: import.meta.env.VITE_BACKEND_URL,
-    withCredentials: true
+    withCredentials: true,
 }
 
 interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
@@ -33,11 +32,7 @@ instance.interceptors.response.use(
     async (error: AxiosError) => {
         const originalRequest: CustomAxiosRequestConfig | undefined = error.config;
         
-        if (
-            error.response?.status === 401 && 
-            originalRequest &&
-            !originalRequest._retry
-        ) {
+        if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
             originalRequest._retry = true;
             try {
                 const response = await apiGetRefreshToken();

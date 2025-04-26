@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import debounce from 'lodash/debounce' // Import debounce from lodash
 
+// ------------------------ IMPORT APIS DEVICE, SENSOR, COMMAND ----------------------------------
 import { 
     apiGetAllDedicatedDevice, 
     apiGetAllSharedDevice, 
@@ -10,9 +11,13 @@ import {
 } from '@/apis/device'
 
 import {
+  apiGetSensorData, apiGetSensorDataById
+} from '@/apis/sensor'
+
+import {
     apiFan, apiLight, apiRGB, apiWatering
 } from '@/apis/command'
-
+// -------------------------------------------------------------------------------------------------
 import { Device, DeviceType } from "@/types/deviceType"
 
 interface DeviceStore {

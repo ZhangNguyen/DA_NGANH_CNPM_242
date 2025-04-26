@@ -1,4 +1,7 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+
+// ------------ UI COMPONENTS FROM SHADCN.UI -------------------------------------------------------------
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,6 +29,10 @@ import {
   TabsTrigger 
 } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+// ---------------------------------------------------------------------------------------------------------
+
+// ------------ ICONS FROM LUCIDE REACT --------------------------------------------------------------------
 import { 
   Droplet, 
   Fan, 
@@ -36,20 +43,24 @@ import {
   Loader2,
   CheckCircle
 } from "lucide-react";
-import { useForm } from "react-hook-form";
+// ---------------------------------------------------------------------------------------------------------
+
+// ------------ TYPE OF DEVICE, ADAFRUIT, SOCKET -----------------------------------------------------------
 import { Device, DeviceType } from "@/types/deviceType"
-import { useDeviceStore } from "@/store/useDeviceStore";
+import { adafruitState, AdafruitConfig } from "@/types/adafruit"
+import { SoilData, SensorData, PlantStatusData } from "@/types/socket"
+// ---------------------------------------------------------------------------------------------------------
+
+// ------------ APIS OF SOCKET AND ADAFRUIT ----------------------------------------------------------------
 import { apiGetAdafruitInfo, apiLoginAdafruit } from '@/apis/adfruit'
 import { socket } from '@/apis/socket'
-import { Alert, AlertDescription } from "@/components/ui/alert";
+// ---------------------------------------------------------------------------------------------------------
 
-interface AdafruitConfig {
-  adafruit_username: string;
-  adafruit_key: string;
-}
+// ------------ DEVICE STORE FROM ZUSTAND ------------------------------------------------------------------
+import { useDeviceStore } from "@/store/useDeviceStore";
+// ---------------------------------------------------------------------------------------------------------
 
-const DeviceControlPage: React.FC = () => {
-  // Get state and actions from Zustand store
+const DeviceControlPage = () => {
   const { 
     dedicatedDevices, 
     sharedDevices, 
@@ -63,48 +74,69 @@ const DeviceControlPage: React.FC = () => {
     controlWatering,
     updatePendingValue,
     isSensorType,
-    getDeviceControlRange
+    getDeviceControlRange,
+    updateDeviceValue
   } = useDeviceStore();
-  
-  // New state for Adafruit config status
-  const [adafruitStatus, setAdafruitStatus] = useState<{
-    isConfigured: boolean;
-    isLoading: boolean;
-    error: string | null;
-    success: string | null;
-  }>({
+
+  const [adafruitStatus, setAdafruitStatus] = useState<adafruitState>({
     isConfigured: false,
     isLoading: false,
     error: null,
     success: null
   });
   
-  //Sensor bao gồm [light,humid,temp]
-  
-  const [sensorData, setSensorData] = useState(null);
-  const [soilData, setSoilData] = useState(null);
-  const [plantStatus, setPlantStatus] = useState(null);
+  // State for socket data - more structured now with proper types
+  const [sensorData, setSensorData] = useState<SensorData>({});
+  const [soilData, setSoilData] = useState<SoilData>({});
+  const [plantStatus, setPlantStatus] = useState<PlantStatusData>({});
 
-  socket.on("sensor_update", (data) => {
-    console.log("Sensor updated:", data);
-    setSensorData(data);
-    console.log(sensorData)
-  });
-  socket.on("soil_update", (data) => {
-    console.log("Soil updated:", data);
-    setSoilData(data);
-    console.log(soilData)
-  });
-  socket.on("plant-status-update", (data) => {
-    console.log("Plant status update:", data);
-    setPlantStatus(data);
-    console.log(plantStatus)
-  });
+  // Set up socket listeners in useEffect to avoid recreation on each render
+  useEffect(() => {
+    // Set up socket event listeners
+    const onSensorUpdate = (data: SensorData) => {
+      console.log("Sensor updated:", data);
+      setSensorData(data);
+      
+      // If the data contains device info, update the device store too
+      if (data._id !== undefined && data.value !== undefined) {
+        // Determine if it's a shared device based on the 'type' field
+        const isShared = data.type === 'SharedDevice';
+        updateDeviceValue(data._id, data.value, isShared);
+      }
+    };
 
-  // All devices combined
+    const onSoilUpdate = (data: SoilData) => {
+      console.log("Soil updated:", data);
+      setSoilData(data);
+      
+      // If the data contains device info, update the device store too
+      if (data._id !== undefined && data.value !== undefined) {
+        // Determine if it's a shared device based on the 'type' field
+        const isShared = data.type === 'SharedDevice';
+        updateDeviceValue(data._id, data.value, isShared);
+      }
+    };
+
+    const onPlantStatusUpdate = (data: PlantStatusData) => {
+      console.log("Plant status update:", data);
+      setPlantStatus(data);
+    };
+
+    // Register event listeners
+    socket.on("sensor_update", onSensorUpdate);
+    socket.on("soil_update", onSoilUpdate);
+    socket.on("plant-status-update", onPlantStatusUpdate);
+
+    // Clean up listeners when component unmounts
+    return () => {
+      socket.off("sensor_update", onSensorUpdate);
+      socket.off("soil_update", onSoilUpdate);
+      socket.off("plant-status-update", onPlantStatusUpdate);
+    };
+  }, [updateDeviceValue]); // Include updateDeviceValue in dependency array
+
   const allDevices = [...dedicatedDevices, ...sharedDevices];
 
-  // State for Adafruit configuration using React Hook Form
   const adafruitForm = useForm({
     defaultValues: {
       adafruit_username: "",
@@ -112,30 +144,25 @@ const DeviceControlPage: React.FC = () => {
     }
   });
   
-  // Fetch Adafruit configuration on component mount
   const getAdafruitInfo = async () => {
     try {
       setAdafruitStatus(prev => ({ ...prev, isLoading: true, error: null }));
       const response = await apiGetAdafruitInfo();
       
-      // Check if response has adafruit config data
       if (response) {
         const { adafruit_username, adafruit_key } = response.data;
         
-        // Update form with retrieved values
         adafruitForm.reset({
           adafruit_username: adafruit_username || "",
           adafruit_key: adafruit_key || ""
         });
         
-        // Set configured status based on whether both values exist
         setAdafruitStatus(prev => ({
           ...prev,
           isConfigured: !!(adafruit_username && adafruit_key),
           isLoading: false
         }));
       } else {
-        // No configuration found
         setAdafruitStatus(prev => ({
           ...prev,
           isConfigured: false,
@@ -152,13 +179,11 @@ const DeviceControlPage: React.FC = () => {
     }
   };
   
-  // Fetch devices on component mount
   useEffect(() => {
     fetchAllDevices();
     getAdafruitInfo();
   }, [fetchAllDevices]);
 
-  // Handle device control based on type
   const handleDeviceControl = (device: Device, value: number) => {
     if (device.status === "deactive") return;
     
@@ -182,13 +207,30 @@ const DeviceControlPage: React.FC = () => {
     }
   };
 
-  // Toggle binary devices (on/off)
   const handleToggleDevice = (device: Device) => {
     const newValue = device.value === 0 ? 1 : 0;
     handleDeviceControl(device, newValue);
   };
 
-  // Get device icon based on type
+  // Create a helper function to check if a device has recent updates from socket
+  const getLatestDeviceValue = (device: Device): number => {
+    // Check if this device has recent updates from sockets
+    if (sensorData._id === device._id) {
+      return sensorData.value !== undefined ? sensorData.value : device.value;
+    }
+    
+    if (soilData._id === device._id) {
+      return soilData.value !== undefined ? soilData.value : device.value;
+    }
+    
+    // If no socket updates or pending values, use the device's value
+    if (pendingValues && pendingValues[device._id] !== undefined) {
+      return pendingValues[device._id];
+    }
+    
+    return device.value;
+  };
+
   const getDeviceIcon = (type: DeviceType) => {
     switch (type) {
       case "pump":
@@ -207,7 +249,6 @@ const DeviceControlPage: React.FC = () => {
     }
   };
 
-  // Get friendly device type name
   const getDeviceTypeName = (type: DeviceType) => {
     switch (type) {
       case "pump": return "Water Pump";
@@ -222,13 +263,9 @@ const DeviceControlPage: React.FC = () => {
   };
 
   const getDeviceValue = (device: Device) => {
-    if (pendingValues && pendingValues[device._id] !== undefined) {
-      return pendingValues[device._id];
-    }
-    return device.value;
+    return getLatestDeviceValue(device);
   };
 
-  // Render device control UI based on device type
   const renderDeviceControl = (device: Device) => {
     if (device.status === "deactive") {
       return <div className="text-gray-400">Device offline</div>;
@@ -244,7 +281,9 @@ const DeviceControlPage: React.FC = () => {
         case "soil": unit = ""; break;
       }
       
-      return <div className="font-medium">{device.value}{unit}</div>;
+      // Use the latest value (either from socket updates or device store)
+      const currentValue = getLatestDeviceValue(device);
+      return <div className="font-medium">{currentValue}{unit}</div>;
     }
 
     const currentValue = getDeviceValue(device);
@@ -300,7 +339,6 @@ const DeviceControlPage: React.FC = () => {
           );
         }
       case "light":
-        // Light intensity with pending indicator
         return (
           <div className="flex items-center gap-4 max-w-64">
             <div className="min-w-16 flex items-center gap-1">
@@ -315,9 +353,7 @@ const DeviceControlPage: React.FC = () => {
               max={100}
               step={1}
               onValueChange={(value) => {
-                // Update the pending value immediately
                 updatePendingValue(device._id, value[0]);
-                // Trigger the debounced control function
                 handleDeviceControl(device, value[0]);
               }}
               className="w-40"
@@ -362,7 +398,6 @@ const DeviceControlPage: React.FC = () => {
           success: "Adafruit configuration updated successfully!"
         }));
         
-        // Clear success message after 3 seconds
         setTimeout(() => {
           setAdafruitStatus(prev => ({
             ...prev,
@@ -382,6 +417,50 @@ const DeviceControlPage: React.FC = () => {
     }
   };
 
+  // Add a section to render the latest sensor data from sockets - use AI to gen this to help me track socket in dev evnvironment
+  // const renderLatestSensorData = () => {
+  //   if (!Object.keys(sensorData).length && !Object.keys(soilData).length) {
+  //     return null;
+  //   }
+  //   return (
+  //     <Card className="mb-6">
+  //       <CardHeader>
+  //         <CardTitle>Latest Sensor Updates</CardTitle>
+  //       </CardHeader>
+  //       <CardContent>
+  //         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+  //           {Object.keys(sensorData).length > 0 && (
+  //             <div className="border rounded p-4">
+  //               <h3 className="font-medium mb-2">Sensor Update</h3>
+  //               <pre className="bg-gray-50 p-2 rounded text-xs overflow-auto">
+  //                 {JSON.stringify(sensorData, null, 2)}
+  //               </pre>
+  //             </div>
+  //           )}
+            
+  //           {Object.keys(soilData).length > 0 && (
+  //             <div className="border rounded p-4">
+  //               <h3 className="font-medium mb-2">Soil Update</h3>
+  //               <pre className="bg-gray-50 p-2 rounded text-xs overflow-auto">
+  //                 {JSON.stringify(soilData, null, 2)}
+  //               </pre>
+  //             </div>
+  //           )}
+            
+  //           {Object.keys(plantStatus).length > 0 && (
+  //             <div className="border rounded p-4">
+  //               <h3 className="font-medium mb-2">Plant Status</h3>
+  //               <pre className="bg-gray-50 p-2 rounded text-xs overflow-auto">
+  //                 {JSON.stringify(plantStatus, null, 2)}
+  //               </pre>
+  //             </div>
+  //           )}
+  //         </div>
+  //       </CardContent>
+  //     </Card>
+  //   );
+  // };
+
   if (isLoading && allDevices.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -394,6 +473,9 @@ const DeviceControlPage: React.FC = () => {
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-3xl font-bold mb-6">Device Control</h1>
+
+      {/* Display the latest sensor data if available */}
+      {/* {renderLatestSensorData()} */}
 
       <Tabs defaultValue="devices" className="mb-8">
         <TabsList className="mb-4">
