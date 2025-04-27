@@ -7,4 +7,5 @@ router.get('/', middleware.authMiddlewareClient, Plant.getAllPlantsController); 
 router.get('/:id', middleware.authMiddlewareClient, Plant.getPlantByIdController); //get plant by id
 router.put('/:id', middleware.authMiddlewareClient, Plant.updatePlantController); //update plant by id
 router.delete('/:id', middleware.authMiddlewareClient, Plant.deletePlantController); //delete plant by id
+router.get('/:id/history', middleware.authMiddlewareClient, Plant.getWateringHistoryController);
 export default router;

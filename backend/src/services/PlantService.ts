@@ -9,6 +9,8 @@ import {
   getAllCache,
   deleteCache
 } from '../services/CacheService';const TTL = 250; 
+import History from '../models/History';
+
 export const createPlant = async (
   pumpDeviceId: number | null,
   soilDeviceId: number | null,
@@ -191,4 +193,26 @@ export const deletePlant = async (id: string, user: any) => {
   }
 };
 
+export const getWateringHistory = async (plantId: string, user: any) => {
+  const userId = user.id;
+  try {
+    const plant = await Plant.findOne({ _id: plantId, userId });
+    if (!plant) throw new Error('Plant not found or not authorized');
+    console.log('Querying history for plant:', plantId);
 
+    const history = await History.find({ 
+      plantId: plant._id,  
+    }).sort({ timeaction: -1 });
+
+    console.log('Found history:', history);
+    return {
+      status: 'success',
+      data: history
+    };
+  } catch (error: any) {
+    return {
+      status: 'error',
+      message: error.message
+    };
+  }
+};
