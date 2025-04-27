@@ -10,9 +10,9 @@ import { Link } from "react-router-dom"
 
 const Sidebar = () => {
   return (
-        <Command className="bg-gray-300 rounded-none">
-            <CommandList className="max-h-fit">
-                <CommandGroup heading="Suggestions" >
+        <Command className="bg-gray-300 h-full rounded-none">
+            <CommandList >
+                <CommandGroup heading="Main features" >
                     <CommandItem className="text-lg">
                         <Link to='/' className="flex items-center">
                             <SidebarIcons.House className="mr-2 text-xl}"/>
