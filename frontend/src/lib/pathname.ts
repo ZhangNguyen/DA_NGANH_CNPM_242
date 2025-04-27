@@ -3,7 +3,7 @@ export const pathnames = {
         layout: '/',
         homepage: '',
         dashboard: 'dashboard',
-        statistics: 'statistics',
+        commandHistory: 'command-history',
         login: "/login",
         register: "/register",
         deviceControl: 'device-control',

@@ -26,9 +26,9 @@ const Sidebar = () => {
                         </Link>
                     </CommandItem>
                     <CommandItem className="text-lg">
-                        <Link to='statistics' className="flex items-center">
+                        <Link to='command-history' className="flex items-center">
                             <SidebarIcons.ChartColumn className="mr-2 text-xl"/>
-                            <span className="font-semibold pl-5">Statistics</span>
+                            <span className="font-semibold pl-5">Command History</span>
                         </Link>
                     </CommandItem>
                     <CommandItem className="text-lg">
@@ -40,12 +40,12 @@ const Sidebar = () => {
                 </CommandGroup>
                 <CommandSeparator />
                 <CommandGroup heading="Settings">
-                    <CommandItem className="text-lg">
+                    {/* <CommandItem className="text-lg">
                         <Link to='/user' className="flex items-center">
                             <SidebarIcons.UserRoundCog className="mr-2 text-xl"/>
                             <span className="font-semibold pl-5">Profile</span>
                         </Link>
-                    </CommandItem>
+                    </CommandItem> */}
                     <CommandItem className="text-xl">
                         <Link to='/device-control' className="flex items-center">
                             <SidebarIcons.SlidersHorizontal className="mr-2 text-xl"/>
