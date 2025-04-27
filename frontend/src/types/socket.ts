@@ -1,12 +1,10 @@
-import { DeviceType } from "./deviceType"
+import { DeviceType, SensorType } from "./deviceType"
 
 // Define interfaces for socket data
 export interface SensorData {
   _id?: number;
-  devicetype?: DeviceType;
-  type?: string;
-  value?: number;
-  // Add any other fields you might receive
+  type?: SensorType;
+  newestdata?: number;
 }
 
 export interface SoilData {
@@ -14,7 +12,6 @@ export interface SoilData {
   devicetype?: DeviceType;
   type?: string;
   value?: number;
-  // Add any other fields you might receive
 }
 
 export interface PlantStatusData {
