@@ -18,12 +18,13 @@ import {
     apiFan, apiLight, apiRGB, apiWatering
 } from '@/apis/command'
 // -------------------------------------------------------------------------------------------------
-import { Device, DeviceType } from "@/types/deviceType"
+import { Device, DeviceType, SensorType, Sensor } from "@/types/deviceType"
 
 interface DeviceStore {
   // State
   dedicatedDevices: Device[];
   sharedDevices: Device[];
+  sensorDevices: Sensor[];
   isLoading: boolean;
   error: string | null;
   pendingValues: Record<number, number>; // Stores temporary values during debounce
@@ -32,6 +33,7 @@ interface DeviceStore {
   fetchAllDevices: () => Promise<void>;
   fetchDedicatedDevices: () => Promise<void>;
   fetchSharedDevices: () => Promise<void>;
+  fetchSensorDevices: () => Promise<void>;
   getDeviceById: (id: number, isShared: boolean) => Promise<Device | null>;
   
   // Device control actions
@@ -42,8 +44,9 @@ interface DeviceStore {
   
   // Helper methods
   updateDeviceValue: (deviceId: number, value: number, isShared: boolean) => void;
+  updateSensorValue: (sensorId: number, value: number) => void
   updatePendingValue: (deviceId: number, value: number) => void;
-  isSensorType: (deviceType: DeviceType) => boolean;
+  isSensorType: (object: any) => boolean;
   isControlableDevice: (deviceType: DeviceType) => boolean;
   getDeviceControlRange: (deviceType: DeviceType) => { min: number; max: number };
 }
@@ -77,6 +80,7 @@ export const useDeviceStore = create<DeviceStore>()(
         // Initial state
         dedicatedDevices: [],
         sharedDevices: [],
+        sensorDevices: [],
         isLoading: false,
         error: null,
         pendingValues: {},
@@ -87,7 +91,8 @@ export const useDeviceStore = create<DeviceStore>()(
           try {
             await Promise.all([
               get().fetchDedicatedDevices(),
-              get().fetchSharedDevices()
+              get().fetchSharedDevices(),
+              get().fetchSensorDevices()
             ]);
           } catch (error) {
             set({ error: error instanceof Error ? error.message : "Failed to fetch devices" });
@@ -112,6 +117,16 @@ export const useDeviceStore = create<DeviceStore>()(
           try {
             const response = await apiGetAllSharedDevice();
             set({ sharedDevices: response.data || [] });
+          } catch (error) {
+            set({ error: error instanceof Error ? error.message : "Failed to fetch shared devices" });
+            throw error;
+          }
+        },
+        // Fetch sensor devices
+        fetchSensorDevices: async () => {
+          try {
+            const response = await apiGetSensorData();
+            set({ sensorDevices: response.data || [] });
           } catch (error) {
             set({ error: error instanceof Error ? error.message : "Failed to fetch shared devices" });
             throw error;
@@ -191,6 +206,15 @@ export const useDeviceStore = create<DeviceStore>()(
           });
         },
 
+        // Update sensor value after listen from socket
+        updateSensorValue: (sensorId: number, value: number) => {
+          set(state => ({
+            sensorDevices: state.sensorDevices.map(sensor =>
+              sensor._id === sensorId ? { ...sensor, newestdata: value } : sensor
+            )
+          }));
+        },
+
         // Update pending value for immediate UI feedback during debounce
         updatePendingValue: (deviceId: number, value: number) => {
           set(state => ({
@@ -199,8 +223,8 @@ export const useDeviceStore = create<DeviceStore>()(
         },
 
         // Helper to check if a device type is a sensor
-        isSensorType: (deviceType: DeviceType) => {
-          return ["soil", "humid_id", "temp"].includes(deviceType);
+        isSensorType: (object: any) => {
+          return 'newestdata' in object
         },
 
         // Helper to check if a device type is controllable

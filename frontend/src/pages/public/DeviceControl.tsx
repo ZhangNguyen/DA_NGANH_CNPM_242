@@ -38,6 +38,8 @@ import {
   Fan, 
   LightbulbIcon, 
   ThermometerIcon, 
+  ShowerHead,
+  Sun,
   Droplets, 
   PaletteIcon,
   Loader2,
@@ -46,7 +48,7 @@ import {
 // ---------------------------------------------------------------------------------------------------------
 
 // ------------ TYPE OF DEVICE, ADAFRUIT, SOCKET -----------------------------------------------------------
-import { Device, DeviceType } from "@/types/deviceType"
+import { Device, DeviceType, SensorType, DeviceAndSensor, Sensor } from "@/types/deviceType"
 import { adafruitState, AdafruitConfig } from "@/types/adafruit"
 import { SoilData, SensorData, PlantStatusData } from "@/types/socket"
 // ---------------------------------------------------------------------------------------------------------
@@ -64,6 +66,7 @@ const DeviceControlPage = () => {
   const { 
     dedicatedDevices, 
     sharedDevices, 
+    sensorDevices,
     isLoading, 
     error, 
     pendingValues,
@@ -75,7 +78,8 @@ const DeviceControlPage = () => {
     updatePendingValue,
     isSensorType,
     getDeviceControlRange,
-    updateDeviceValue
+    updateDeviceValue,
+    updateSensorValue
   } = useDeviceStore();
 
   const [adafruitStatus, setAdafruitStatus] = useState<adafruitState>({
@@ -98,10 +102,8 @@ const DeviceControlPage = () => {
       setSensorData(data);
       
       // If the data contains device info, update the device store too
-      if (data._id !== undefined && data.value !== undefined) {
-        // Determine if it's a shared device based on the 'type' field
-        const isShared = data.type === 'SharedDevice';
-        updateDeviceValue(data._id, data.value, isShared);
+      if (data._id !== undefined && data.newestdata !== undefined) {
+        updateSensorValue(data._id, data.newestdata);
       }
     };
 
@@ -135,7 +137,7 @@ const DeviceControlPage = () => {
     };
   }, [updateDeviceValue]); // Include updateDeviceValue in dependency array
 
-  const allDevices = [...dedicatedDevices, ...sharedDevices];
+  const allDevices: any = [...dedicatedDevices, ...sharedDevices, ...sensorDevices]
 
   const adafruitForm = useForm({
     defaultValues: {
@@ -215,9 +217,6 @@ const DeviceControlPage = () => {
   // Create a helper function to check if a device has recent updates from socket
   const getLatestDeviceValue = (device: Device): number => {
     // Check if this device has recent updates from sockets
-    if (sensorData._id === device._id) {
-      return sensorData.value !== undefined ? sensorData.value : device.value;
-    }
     
     if (soilData._id === device._id) {
       return soilData.value !== undefined ? soilData.value : device.value;
@@ -230,24 +229,45 @@ const DeviceControlPage = () => {
     
     return device.value;
   };
+  const getLatestSensorValue = (sensor: Sensor): number => {
+    // Check if this device has recent updates from sockets
+    if (sensorData._id === sensor._id) {
+      return sensorData.newestdata !== undefined ? sensorData.newestdata : sensor.newestdata;
+    }
+    
+    // If no socket updates or pending values, use the device's value
+    if (pendingValues && pendingValues[sensor._id] !== undefined) {
+      return pendingValues[sensor._id];
+    }
+    
+    return sensor.newestdata;
+  };
+  
 
   const getDeviceIcon = (type: DeviceType) => {
     switch (type) {
       case "pump":
-        return <Droplet className="h-5 w-5" />;
+        return <ShowerHead className="h-5 w-5" />;
       case "fan_level":
         return <Fan className="h-5 w-5" />;
       case "light":
         return <LightbulbIcon className="h-5 w-5" />;
       case "RGB":
         return <PaletteIcon className="h-5 w-5" />;
-      case "temp":
-        return <ThermometerIcon className="h-5 w-5" />;
-      case "humid_id":
       case "soil":
         return <Droplets className="h-5 w-5" />;
     }
   };
+  const getSensorIcon = (type: SensorType) => {
+    switch (type) {
+      case "humidity":
+        return <Droplet className="h-5 w-5"/>;
+      case "light":
+        return <Sun className="h-5 w-5"/>;
+      case "temperature":
+        return <ThermometerIcon className="h-5 w-5"/>;
+    }
+  }
 
   const getDeviceTypeName = (type: DeviceType) => {
     switch (type) {
@@ -255,16 +275,27 @@ const DeviceControlPage = () => {
       case "fan_level": return "Fan";
       case "light": return "Light";
       case "RGB": return "RGB Light";
-      case "temp": return "Temperature Sensor";
-      case "humid_id": return "Humidity Sensor";
-      case "soil": return "Soil Moisture";
+      // case "temp": return "Temperature Sensor";
+      // case "humid_id": return "Humidity Sensor";
+      case "soil": return "Soil Sensor";
       default: return type;
     }
   };
+  const getSensorTypeName = (type: SensorType) => {
+    switch (type) {
+      case "humidity": return "Humidity Sensor";
+      case "light": return "Light Sensor";
+      case "temperature": return "Temprature Sensor";
+      default: return type;
+    }
+  }
 
   const getDeviceValue = (device: Device) => {
     return getLatestDeviceValue(device);
   };
+  const getSensorValue = (sensor: Sensor) => {
+    return getLatestSensorValue(sensor)
+  }
 
   const renderDeviceControl = (device: Device) => {
     if (device.status === "deactive") {
@@ -272,16 +303,21 @@ const DeviceControlPage = () => {
     }
 
     // If it's a sensor, just show the current value
-    if (isSensorType(device.devicetype)) {
+    // if (isSensorType(device.sensortype)) {
+    //   let unit = "";
+      
+    //   switch (device.sensortype) {
+    //     case "temprature": unit = "°C"; break;
+    //     case "humidity": unit = ""; break;
+    //     case "light": unit = ""; break;
+    //   }
+      
+    //   // Use the latest value (either from socket updates or device store)
+    //   const currentValue = getLatestDeviceValue(device);
+    //   return <div className="font-medium">{currentValue}</div>;
+    // }
+    if (device.devicetype == "soil") {
       let unit = "";
-      
-      switch (device.devicetype) {
-        case "temp": unit = "°C"; break;
-        case "humid_id": unit = ""; break;
-        case "soil": unit = ""; break;
-      }
-      
-      // Use the latest value (either from socket updates or device store)
       const currentValue = getLatestDeviceValue(device);
       return <div className="font-medium">{currentValue}{unit}</div>;
     }
@@ -374,6 +410,14 @@ const DeviceControlPage = () => {
         return null;
     }
   };
+
+  const renderSensorControl = (sensor: Sensor) => {
+    if (sensor.status === "deactive") {
+      return <div className="text-gray-400">Sensor offline</div>;
+    }
+    const currentValue = getSensorValue(sensor);
+    return <div className="font-medium">{currentValue}{}</div>;
+  }
   
   const onAdafruitSubmit = async (data: AdafruitConfig) => {
     try {
@@ -514,27 +558,29 @@ const DeviceControlPage = () => {
                   <TableBody>
                     {allDevices.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={4} className="text-center py-6 text-gray-500">
-                          No devices found. Connect devices to see them here.
-                        </TableCell>
+                      <TableCell colSpan={4} className="text-center py-6 text-gray-500">
+                        No devices found. Connect devices to see them here.
+                      </TableCell>
                       </TableRow>
                     ) : (
-                      allDevices.map((device) => (
-                        <TableRow key={device._id}>
-                          <TableCell className="font-medium flex items-center gap-2">
-                            {getDeviceIcon(device.devicetype)}
-                            {device.name}
-                          </TableCell>
-                          <TableCell>
-                            {getDeviceTypeName(device.devicetype)}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={device.status === "active" ? "default" : "secondary"}>
-                              {device.status === "active" ? "Online" : "Offline"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{renderDeviceControl(device)}</TableCell>
-                        </TableRow>
+                      allDevices.map((device: Device | Sensor) => (
+                      <TableRow key={`${device._id}-${"devicetype" in device ? "Device" : "Sensor"}`}>
+                        <TableCell className="font-medium flex items-center gap-2">
+                          {"devicetype" in device ? getDeviceIcon(device.devicetype) : getSensorIcon(device.type)}
+                          {device.name}
+                        </TableCell>
+                        <TableCell>
+                          {"type" in device ? getSensorTypeName(device.type) : getDeviceTypeName(device.devicetype)}
+                        </TableCell>
+                        <TableCell>
+                        <Badge variant={device.status === "active" ? "default" : "secondary"}>
+                          {device.status === "active" ? "Online" : "Offline"}
+                        </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {"devicetype" in device ? renderDeviceControl(device) : renderSensorControl(device)}
+                        </TableCell>
+                      </TableRow>
                       ))
                     )}
                   </TableBody>
@@ -543,7 +589,6 @@ const DeviceControlPage = () => {
             </CardContent>
           </Card>
         </TabsContent>
-
         <TabsContent value="adafruit">
           <Card>
             <CardHeader>
