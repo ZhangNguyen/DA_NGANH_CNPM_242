@@ -6,6 +6,7 @@ import AdafruitWebhookRouter from './adafruitWebhook';
 import CommandRouter from './CommandRouter';
 import DedicatedRouter from "./DedicatedRouter";
 import SharedRouter from "./SharedDeviceRouter";
+import HistoryRouter from "./HistoryRouter";
 const routes = (app: Express) => {
   app.use('/api/users', UserRouter);
   app.use('/api/sensors', SensorRouter);
@@ -13,6 +14,7 @@ const routes = (app: Express) => {
   app.use('/api/command', CommandRouter);
   app.use('/api/dedicated',DedicatedRouter);
   app.use('/api/shared',SharedRouter);
+  app.use('/api/history',HistoryRouter);
   app.use('/', AdafruitWebhookRouter);
 };
 
