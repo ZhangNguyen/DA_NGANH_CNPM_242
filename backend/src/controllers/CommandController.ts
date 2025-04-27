@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import { Plant_IsWatering,RGB,Poweroff,Light,Fan } from "../services/Command/Client";
 import Plant from '../models/PlantModel';
+import Shared from '../models/SharedDevice';
+import Dedicated from '../models/DedicatedDevice';
 // const WateringControl = async (req: Request, res: Response) => {
 //     try {
 //         await Plant_IsWatering(req.params.deviceId,req.user,req.body.value);
@@ -24,7 +26,7 @@ const WateringControl = async (req: Request, res: Response) => {
             pumpDeviceId: deviceId, 
             userId: user.id 
         });
-
+        
         if (!plant) {
             throw new Error('Không tìm thấy cây trồng liên quan đến thiết bị này');
         }
@@ -47,9 +49,40 @@ const WateringControl = async (req: Request, res: Response) => {
         res.status(500).json({ error: err.message });
     }
 };
-const RGBControl = async (req: Request, res: Response) => {
+// const RGBControl = async (req: Request, res: Response) => {
+//     try {
+//         await RGB(req.params.deviceId,req.user,req.body.value);
+//         return res.status(200).json({ status: "success", message: "Đã thay đổi RGB" });
+
+//     } catch (err: any) {
+//       res.status(500).json({ error: err.message });
+//     }
+//   };
+  const RGBControl = async (req: Request, res: Response) => {
     try {
-        await RGB(req.params.deviceId,req.user,req.body.value);
+        const { deviceId } = req.params; 
+        const { value } = req.body;
+        const user = req.user;
+
+        await RGB(deviceId, user, value);
+
+        const shared = await Shared.findOne({ 
+            _id: deviceId,
+            devicetype : "RGB",
+        });
+
+        if (!shared) {
+            throw new Error('Không tìm thấy RGB thiết bị này');
+        }
+
+        const newHistory = await History.create({
+            plantId: null,
+            action: "RGB",
+            status: "success",
+            value: value,
+            timeaction: new Date(),
+            actiondevice: deviceId
+        });
         return res.status(200).json({ status: "success", message: "Đã thay đổi RGB" });
 
     } catch (err: any) {
@@ -73,17 +106,18 @@ const PoweroffControl = async (req: Request, res: Response) => {
 
         await Poweroff(deviceId, user, value);
 
-        const plant = await Plant.findOne({ 
-            pumpDeviceId: deviceId, 
-            userId: user.id 
+        const shared = await Shared.findOne({ 
+            _id: deviceId
         });
-
-        if (!plant) {
-            throw new Error('Không tìm thấy cây trồng liên quan đến thiết bị này');
+        const dedicated = await Dedicated.findOne({ 
+            _id: deviceId
+        });
+        if (!dedicated && !shared) {
+            throw new Error('Không tìm thấy thiết bị này');
         }
 
         const newHistory = await History.create({
-            plantId: plant._id,
+            plantId: null,
             action: "SHUTDOWN",
             status: "success",
             value: value,
@@ -114,17 +148,17 @@ const LightControl = async (req: Request, res: Response) => {
 
         await Light(deviceId, user, value);
 
-        const plant = await Plant.findOne({ 
-            pumpDeviceId: deviceId, 
-            userId: user.id 
+        const shared = await Shared.findOne({ 
+            _id: deviceId,
+            devicetype : "light",
         });
 
-        if (!plant) {
-            throw new Error('Không tìm thấy cây trồng liên quan đến thiết bị này');
+        if (!shared) {
+            throw new Error('Không tìm thấy light thiết bị này');
         }
 
         const newHistory = await History.create({
-            plantId: plant._id,
+            plantId: null,
             action: "LIGHT",
             status: "success",
             value: value,
@@ -154,17 +188,17 @@ const FanControl = async (req: Request, res: Response) => {
 
         await Fan(deviceId, user, value);
 
-        const plant = await Plant.findOne({ 
-            pumpDeviceId: deviceId, 
-            userId: user.id 
+        const shared = await Shared.findOne({ 
+            _id: Number(deviceId), 
+            devicetype : "fan_level",
         });
 
-        if (!plant) {
-            throw new Error('Không tìm thấy cây trồng liên quan đến thiết bị này');
+        if (!shared) {
+            throw new Error('Không tìm thấy thiết bị này');
         }
 
         const newHistory = await History.create({
-            plantId: plant._id,
+            plantId: null,
             action: "FAN",
             status: "success",
             value: value,

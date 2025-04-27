@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { createPlant,getAllPlants,getPlantById,updatePlant,deletePlant,getWateringHistory } from '../services/PlantService';
+import { createPlant,getAllPlants,getPlantById,updatePlant,deletePlant,getHistory } from '../services/PlantService';
 const createPlantController = async (req: Request, res: Response) => {
     try {
         console.log("createPlantController", req.body);
@@ -62,19 +62,21 @@ const deletePlantController = async (req: Request, res: Response) => {
         return res.status(404).json({ message: error.message });
     }
 }
-const getWateringHistoryController = async (req: Request, res: Response) => {
-    try {
-      const result = await getWateringHistory(req.params.id, req.user); 
+const getHistoryController = async (req: Request, res: Response) => {
+    try {      
+      const result = await getHistory(); 
+      console.log('Request user:');
       return res.status(200).json(result);
     } catch (error: any) {
+      console.log('Error:', error.message);
       return res.status(404).json({ message: error.message });
     }
-  }
+};
 module.exports = {
     createPlantController,
     getAllPlantsController,
     getPlantByIdController,
     updatePlantController,
     deletePlantController,
-    getWateringHistoryController,
+    getHistoryController,
 };

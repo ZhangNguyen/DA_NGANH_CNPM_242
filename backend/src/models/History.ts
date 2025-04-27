@@ -4,7 +4,7 @@ const HistorySchema = new mongoose.Schema(
       value: { type: Number},
       actiondevice: { type: String },
       status:{ type: String, enum: ['success', 'unsucces'] },
-      action: { type: String, enum: ['FAN', 'PUMP','LIGHT','SHUTDOWN']},
+      action: { type: String, enum: ['FAN', 'PUMP','LIGHT','SHUTDOWN','RGB']},
       timeaction: { type: Date},
       plantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Plant' }
     },

@@ -193,26 +193,20 @@ export const deletePlant = async (id: string, user: any) => {
   }
 };
 
-export const getWateringHistory = async (plantId: string, user: any) => {
-  const userId = user.id;
+export const getHistory = async () => {
   try {
-    const plant = await Plant.findOne({ _id: plantId, userId });
-    if (!plant) throw new Error('Plant not found or not authorized');
-    console.log('Querying history for plant:', plantId);
-
-    const history = await History.find({ 
-      plantId: plant._id,  
-    }).sort({ timeaction: -1 });
-
-    console.log('Found history:', history);
-    return {
-      status: 'success',
-      data: history
-    };
+      console.log('Fetching history...');
+      const history = await History.find({}).sort({ timeaction: -1 });
+      console.log('Found history:', history);
+      return {
+          status: 'success',
+          data: history
+      };
   } catch (error: any) {
-    return {
-      status: 'error',
-      message: error.message
-    };
+      console.log('Error fetching history:', error.message);
+      return {
+          status: 'error',
+          message: error.message
+      };
   }
 };
