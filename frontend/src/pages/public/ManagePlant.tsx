@@ -46,25 +46,12 @@ import { toast } from "react-hot-toast";
 import { Device } from "@/types/deviceType"
 import { useDeviceStore } from "@/store/useDeviceStore";
 import { usePlantStore } from "@/store/usePlantStore";
+import { socket } from '@/apis/socket'
+import { PlantStatusData } from "@/types/socket"
 
 const ManagePlant = () => {
-  interface Plant {
-    id: string;
-    type: string;
-    location: string;
-    status: string[];
-    limitWatering: number;
-    limitTemp: number;
-    pumpDeviceId?: number | Device;
-    soilDeviceId?: number | Device;
-    updatedAt: string;
-  }
-  // State for search, editing, and pagination
-  const [search, setSearch] = useState("");
-  const [editingPlant, setEditingPlant] = useState<Plant | null>(null);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [noPumpErrorPlant, setNoPumpErrorPlant] = useState<Plant | null>(null);
-  const [showNoPumpError, setShowNoPumpError] = useState(false);
+  const [plantStatus, setPlantStatus] = useState<PlantStatusData>({});
+  const [plants, setPlants] = useState<Plant[]>([]); // Khởi tạo là mảng trống
   const [newPlant, setNewPlant] = useState<{ 
     type: string;
     location: string;
@@ -82,8 +69,25 @@ const ManagePlant = () => {
     pumpDevice: undefined,
     soilDevice: undefined,
   });
+  interface Plant {
+    id: string;
+    type: string;
+    location: string;
+    status: string[];
+    limitWatering: number;
+    limitTemp: number;
+    pumpDeviceId?: number | Device;
+    soilDeviceId?: number | Device;
+    updatedAt: string;
+  }
   const [currentPage, setCurrentPage] = useState(1);
   const plantsPerPage = 5;
+  const [search, setSearch] = useState("");
+  const [editingPlant, setEditingPlant] = useState<Plant | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [noPumpErrorPlant, setNoPumpErrorPlant] = useState<Plant | null>(null);
+  const [showNoPumpError, setShowNoPumpError] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [usedPumpDevices, setUsedPumpDevices] = useState<Device[]>([]);
   const [usedSoilDevices, setUsedSoilDevices] = useState<Device[]>([]);
   const [waterActionPlant] = useState<Plant | null>(null);
@@ -92,8 +96,6 @@ const ManagePlant = () => {
   const [isWaterActionOpen, setIsWaterActionOpen] = useState(false);
   const [soilDevice, setSoilDevice] = useState<number | undefined>(undefined);
   const [pumpDevice, setPumpDevice] = useState<number | undefined>(undefined);
-  const [plants, setPlants] = useState<Plant[]>([]); // Khởi tạo là mảng trống
-  const [loading, setLoading] = useState(false);
   const [devices, setDevices] = useState<{ soil: Device[]; pump: Device[], fan: Fan | null }>({
     soil: [],
     pump: [],
@@ -108,18 +110,17 @@ const ManagePlant = () => {
   };
 
   const {controlFan, controlWatering} = useDeviceStore();
+  const {addPlant } = usePlantStore();
 
   const fetchDevices = async () => {
     try {
       setLoading(true);
       await useDeviceStore.getState().fetchAllDevices();
   
-      const dedicatedDevices = useDeviceStore.getState().dedicatedDevices;
-      const sharedDevices = useDeviceStore.getState().sharedDevices
-  
-      const soilDevices = dedicatedDevices.filter(device => device.devicetype === "soil");
-      const pumpDevices = dedicatedDevices.filter(device => device.devicetype === "pump");
-      const fanDevice = sharedDevices.find(device => device.devicetype === "fan_level") as Fan | null;
+      const soilDevices = useDeviceStore.getState().dedicatedDevices.filter(device => device.devicetype ==="soil");
+      const pumpDevices = useDeviceStore.getState().sharedDevices.filter(device => device.devicetype === "pump");
+      const fanDevice = useDeviceStore.getState().sharedDevices.find(device => device.devicetype === "fan_level") as Fan | null;
+      
       setDevices({ soil: soilDevices, pump: pumpDevices, fan: fanDevice });
     } catch (error: any) {
       console.error("Lỗi khi lấy thiết bị dedicated:", error);
@@ -128,9 +129,6 @@ const ManagePlant = () => {
       setLoading(false);
     }
   };
-
-
-  const {addPlant } = usePlantStore();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -160,22 +158,33 @@ const ManagePlant = () => {
           }));
           setPlants(normalizedPlants);
         } else {
-          console.error("Dữ liệu cây không hợp lệ từ API:", plantsRes);
-          toast.error("Dữ liệu cây không hợp lệ.");
+          console.error("Error Data from API:", plantsRes);
+          toast.error("Error Data");
         }
   
         // Fetch device sau
         await fetchDevices();
         
       } catch (error: any) {
-        console.error("Chi tiết lỗi:", error);
-        toast.error("Không thể lấy dữ liệu cây.");
+        console.error("Error Detail: ", error);
+        toast.error("Error Data");
       } finally {
         setLoading(false);
       }
     };
+
+    const onPlantStatusUpdate = (data: PlantStatusData) => {
+      console.log("Plant status update:", data);
+      setPlantStatus(data);
+      window.location.reload();
+    };
+    socket.on("plant-status-update", onPlantStatusUpdate);
   
     fetchData();
+
+    return () => {
+      socket.off("plant-status-update", onPlantStatusUpdate);
+    };
   }, []);
 
   useEffect(() => {
@@ -193,19 +202,16 @@ const ManagePlant = () => {
     }
   }, [plants, devices]);
   
-  // Tính toán available devices (chỉ tính khi plants hoặc devices thay đổi)
-const availableSoilDevices = devices.soil.filter(device => 
-  !usedSoilDevices.some(used => used._id === device._id) ||
-  device._id === newPlant.soilDevice // vẫn show cái device đã chọn trong newPlant
-);
+  const availableSoilDevices = devices.soil.filter(device => 
+    !usedSoilDevices.some(used => used._id === device._id) ||
+    device._id == newPlant.soilDevice 
+  );
 
-const availablePumpDevices = devices.pump.filter(device => 
-  !usedPumpDevices.some(used => used._id === device._id) ||
-  device._id === newPlant.pumpDevice
-);
+  const availablePumpDevices = devices.pump.filter(device => 
+    !usedPumpDevices.some(used => used._id === device._id) ||
+    device._id == newPlant.pumpDevice
+  );
 
-
-    // Handle cl"icking on a status
   const handleDeviceControl = (device: Device, value: number) => {
       if (device.status === "deactive") return;
       
@@ -270,7 +276,6 @@ const availablePumpDevices = devices.pump.filter(device =>
   }
 };
   
-  // Filter plants based on search and pagination
   const filteredPlants = plants.filter(
     (plant) =>
       plant.type &&
@@ -284,7 +289,6 @@ const availablePumpDevices = devices.pump.filter(device =>
     currentPage * plantsPerPage
   );
 
-  // Handle pagination
   const handlePrevPage = () => {
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
@@ -297,25 +301,6 @@ const availablePumpDevices = devices.pump.filter(device =>
     }
   };
 
-  const getAvailableSoilDevices = (currentPlantId: string): Device[] => {
-    const assignedSoilIds = plants
-      .filter(p => p.id !== currentPlantId && p.soilDeviceId)
-      .map(p => p.soilDeviceId);
-  
-    return devices.soil.filter((device) => !assignedSoilIds.includes(device._id));
-  };
-  
-
-  const getAvailablePumpDevices = (currentPlantId: string): Device[] => {
-    const assignedPumpIds = plants
-      .filter(p => p.id !== currentPlantId && p.pumpDeviceId)
-      .map(p => p.pumpDeviceId); // Lấy _id từ device
-  
-    return devices.pump.filter((device) => !assignedPumpIds.includes(device._id));
-  };
-  
-
-  // Add a new plant with API
   const handleAddPlant = async () => {
     if (!newPlant.type.trim()) return;    
     try {
@@ -358,7 +343,6 @@ const availablePumpDevices = devices.pump.filter(device =>
     }
   };
 
-  // Remove a plant with API
   const handleDeletePlant = async (id: string): Promise<void> => {
     try {
       setLoading(true);
@@ -384,7 +368,6 @@ const availablePumpDevices = devices.pump.filter(device =>
     }
   };
 
-  // Update a plant with API
   const handleUpdatePlant = async () => {
     if (!editingPlant) return;
     
@@ -412,15 +395,11 @@ const availablePumpDevices = devices.pump.filter(device =>
     }
   };
 
-  
-
-  // Check if plant is actively watering - FIXED: Added null check
   const isPlantWatering = (plant: Plant | null) => {
     if (!plant) return false; // Check if plant is null
     return plant.status.includes("watering");
   };
 
-  // Get status icon
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "normal":
@@ -431,16 +410,15 @@ const availablePumpDevices = devices.pump.filter(device =>
         return <Fan className="h-4 w-4" />;   
     }
   };
-  // Render device badges
   const renderDeviceBadges = (plant: Plant) => {
     return (
       <div className="flex flex-wrap gap-1">
-        {plant.soilDeviceId && 
+        {plant.soilDeviceId && plant.soilDeviceId != 0 && plant.soilDeviceId !== 0 &&
           <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-200">
             {typeof plant.soilDeviceId === "object" && plant.soilDeviceId.name}
           </Badge>
         }
-        {plant.pumpDeviceId && 
+        {plant.pumpDeviceId && plant.pumpDeviceId != 0 && plant.soilDeviceId !== 0 &&
           <Badge variant="outline" className="bg-blue-50 text-blue-800 border-blue-200">
             {typeof plant.pumpDeviceId === "object" && plant.pumpDeviceId.name}
           </Badge>
@@ -504,22 +482,24 @@ const availablePumpDevices = devices.pump.filter(device =>
               />
             </div>
             
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-wrap items-end gap-4">
+              {/* Plant Name */}
               <Input
                 placeholder="Enter new plant name..."
                 value={newPlant.type}
                 onChange={(e) => setNewPlant({ ...newPlant, type: e.target.value })}
-                className="flex-1"
+                className="flex-1 min-w-[200px]"
               />
 
-              {/* Vị trí cây */}
+              {/* Location */}
               <Input
                 placeholder="Enter location..."
                 value={newPlant.location}
                 onChange={(e) => setNewPlant({ ...newPlant, location: e.target.value })}
-                className="flex-1"
+                className="flex-1 min-w-[200px]"
               />
 
+              {/* Status */}
               <Select
                 value={newPlant.status.length > 0 ? newPlant.status[0] : "normal"}
                 onValueChange={(value) => {
@@ -536,6 +516,30 @@ const availablePumpDevices = devices.pump.filter(device =>
                   <SelectItem value="fanning">Fanning</SelectItem>
                 </SelectContent>
               </Select>
+
+              {/* Limit Watering */}
+              <div className="flex flex-col w-32">
+                <label className="text-xs text-gray-600 mb-1">Limit Watering</label>
+                <Input
+                  type="number"
+                  placeholder="e.g. 60"
+                  value={newPlant.limitWatering ?? ""}
+                  onChange={(e) => setNewPlant({ ...newPlant, limitWatering: Number(e.target.value) })}
+                />
+              </div>
+
+              {/* Limit Temp */}
+              <div className="flex flex-col w-32">
+                <label className="text-xs text-gray-600 mb-1">Limit Temp</label>
+                <Input
+                  type="number"
+                  placeholder="e.g. 20"
+                  value={newPlant.limitTemp ?? ""}
+                  onChange={(e) => setNewPlant({ ...newPlant, limitTemp: Number(e.target.value) })}
+                />
+              </div>
+
+              {/* Add Button */}
               <Button 
                 onClick={handleAddPlant} 
                 className="bg-green-600 hover:bg-green-700"
@@ -544,6 +548,7 @@ const availablePumpDevices = devices.pump.filter(device =>
                 {loading ? "Adding..." : "Add"}
               </Button>
             </div>
+
 
             {/* Device selection for new plant */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border p-4 rounded-md">
@@ -852,11 +857,11 @@ const availablePumpDevices = devices.pump.filter(device =>
                   <div className="flex items-center space-x-2">
                     <label className="text-sm w-16">Soil:</label>
                     <Select
-                      value={editingPlant.soilDeviceId !== undefined ? String(editingPlant.soilDeviceId): "none"}
+                      value={editingPlant.soilDeviceId === 0 ? "none" : String(editingPlant.soilDeviceId) || "none"}
                       onValueChange={(value) => {
                         setEditingPlant({
                           ...editingPlant,
-                          soilDeviceId: value === "none" ? undefined : Number(value),
+                          soilDeviceId: value === "none" ? 0 : Number(value),
                         });
                       }}
                     >
@@ -865,7 +870,7 @@ const availablePumpDevices = devices.pump.filter(device =>
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="none">None</SelectItem>
-                        {getAvailableSoilDevices(editingPlant.id).map((device) => (
+                        {availableSoilDevices.map((device) => (
                           <SelectItem key={device._id} value={String(device._id)}>
                             {device.name}
                           </SelectItem>
@@ -876,11 +881,11 @@ const availablePumpDevices = devices.pump.filter(device =>
                   <div className="flex items-center space-x-2">
                     <label className="text-sm w-16">Pump:</label>
                     <Select
-                      value={editingPlant.pumpDeviceId !== undefined ? String(editingPlant.pumpDeviceId): "none"}
+                      value={editingPlant.pumpDeviceId === 0 ? "none" : String(editingPlant.pumpDeviceId) || "none"}
                       onValueChange={(value) => {
                         setEditingPlant({
                           ...editingPlant,
-                          pumpDeviceId: value === "none" ? undefined : Number(value),
+                          pumpDeviceId: value === "none" ? 0 : Number(value),
                         });
                       }}
                     >
@@ -889,7 +894,7 @@ const availablePumpDevices = devices.pump.filter(device =>
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="none">None</SelectItem>
-                        {getAvailablePumpDevices(editingPlant.id).map((device) => (
+                        {availablePumpDevices.map((device) => (
                           <SelectItem key={device._id} value={String(device._id)}>
                             {device.name}
                           </SelectItem>
