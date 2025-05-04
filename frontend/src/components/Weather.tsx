@@ -61,7 +61,7 @@ const Weather = () => {
   } 
   const icon = allIcons[weatherData?.weather[0]?.icon as keyof typeof allIcons ?? '01d']
   useEffect(() => { 
-    //search("Ho Chi Minh") 
+    search("Ho Chi Minh") 
   }, [])
   return (
     <div className='flex flex-col items-center h-full rounded-xl place-self-center p-10 border-2 bg-linear-45 from-slate-300 to-gray-400'>

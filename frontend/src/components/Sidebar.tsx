@@ -11,7 +11,7 @@ import { Link } from "react-router-dom"
 const Sidebar = () => {
   return (
         <Command className="bg-gray-300 h-full rounded-none">
-            <CommandList >
+            <CommandList className="h-full" >
                 <CommandGroup heading="Main features" >
                     <CommandItem className="text-lg">
                         <Link to='/' className="flex items-center">

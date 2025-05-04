@@ -69,7 +69,7 @@ const DashBoard = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      
+        
       {error && (
         <div className="mb-4 p-3 bg-red-100 text-red-800 rounded-lg">
           {error}

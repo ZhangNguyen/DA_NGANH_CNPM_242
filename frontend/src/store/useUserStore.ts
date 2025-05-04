@@ -49,7 +49,9 @@ export const useUserStore = create<State & Actions>() (
             signIn: async (data) => {
                 try {
                     const response = await apiSignIn(data);
-                    
+                    if (response?.data.message === "Invalid password") {
+                        return false 
+                    }
                     if (response?.data) {
                         set({ 
                             isAuthenticating: true,
