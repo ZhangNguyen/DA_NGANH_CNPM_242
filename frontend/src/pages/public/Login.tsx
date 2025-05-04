@@ -13,8 +13,8 @@ import { useUserStore } from "@/store/useUserStore";
 import { toast } from "react-hot-toast";
 // Schema xác thực dữ liệu với zod
 const formSchema = z.object({
-  email: z.string().email("Email không hợp lệ"),
-  password: z.string().min(6, "Mật khẩu ít nhất 6 ký tự"),
+  email: z.string().email("Email not Valid"),
+  password: z.string().min(6, "Password must contain at least 6 characters"),
 });
 
 type FormSchemaType = z.infer<typeof formSchema>;
@@ -32,10 +32,10 @@ const LoginForm = () => {
   const onSubmit = async (data: FormSchemaType) => {
     const response = await signIn(data);
     if (!response) {
-      toast.error("Đăng nhập thất bại!");
+      toast.error("Sign In Error. Wrong Email or Password!");
       return;
     }
-    toast.success("Đăng nhập thành công!");
+    toast.success("Sign In Successfully!");
     navigate('/');
   };
   
@@ -56,7 +56,7 @@ const LoginForm = () => {
             }`}
             onClick={() => setIsLogin(true)}
           >
-            Đăng nhập
+            Sign In
           </button>
 
           {/* Nút Đăng ký */}
@@ -66,7 +66,7 @@ const LoginForm = () => {
               }`}
               onClick={() => navigate("/register")}
             >
-              Đăng ký
+              Sign Up
           </button>
         </div>
       </div>
@@ -76,7 +76,7 @@ const LoginForm = () => {
       {/* Form đăng nhập/đăng ký */}
       <div className="p-6 bg-white dark:bg-zinc-800 rounded-lg w-[400px] mt-1">
         <h2 className="text-center text-xl font-semibold text-black dark:text-white">
-          {isLogin ? "Đăng nhập" : "Đăng ký"}
+          {isLogin ? "Sign In" : "Sign Up"}
         </h2>
 
         <FormProvider {...formMethods}>
@@ -92,7 +92,7 @@ const LoginForm = () => {
                 render={({ field }) => (
                   <Input
                     type="email"
-                    placeholder="Nhập email"
+                    placeholder="Enter Email"
                     className="w-full p-3 bg-slate-100 dark:bg-slate-500 text-black border-none dark:text-white focus-visible:ring-0 focus-visible:ring-offset-0"
                     {...field}
                   />
@@ -103,7 +103,7 @@ const LoginForm = () => {
             {/* Input Mật khẩu */}
             <FormItem>
               <FormLabel className="uppercase text-xs font-bold text-zinc-500 dark:text-white">
-                Mật khẩu
+                Password
               </FormLabel>
               <Controller
                 name="password"
@@ -111,7 +111,7 @@ const LoginForm = () => {
                 render={({ field }) => (
                   <Input
                     type="password"
-                    placeholder="Nhập mật khẩu"
+                    placeholder="Enter Password"
                     className="w-full p-3 bg-slate-100 dark:bg-slate-500 text-black border-none dark:text-white focus-visible:ring-0 focus-visible:ring-offset-0"
                     {...field}
                   />
@@ -121,11 +121,11 @@ const LoginForm = () => {
 
             {/* Nút đăng nhập/đăng ký */}
             <Button type="submit" className="w-full py-3 text-lg bg-black text-white hover:bg-slate-600">
-              {isLogin ? "Đăng nhập" : "Đăng ký"}
+              {isLogin ? "Sign In" : "Sign Up"}
             </Button>
             <div className="flex justify-center mt-2">
               <Button onClick={() => navigate("/")} className="w-1/2 py-3 text-lg bg-gray-500 text-white hover:bg-gray-400">
-              Trở về trang chủ
+              Back to Home
               </Button>
             </div>
           </form>

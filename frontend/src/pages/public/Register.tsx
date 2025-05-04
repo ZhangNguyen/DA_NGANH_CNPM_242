@@ -14,14 +14,14 @@ import { toast } from "react-hot-toast";
 
 const formSchema = z
   .object({
-    username: z.string().min(3, "Tên người dùng ít nhất 3 ký tự"),
-    email: z.string().email("Email không hợp lệ"),
-    password: z.string().min(6, "Mật khẩu ít nhất 6 ký tự"),
-    phone: z.string().regex(/^[0-9]{10,11}$/, "Số điện thoại không hợp lệ"),
+    username: z.string().min(3, "User name must contain at least 3 Characters"),
+    email: z.string().email("Email not Valid"),
+    password: z.string().min(6, "Password must contain at least 6 characters"),
+    phone: z.string().regex(/^[0-9]{10,11}$/, "Phone Number not Valid"),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "Mật khẩu xác nhận không khớp",
+    message: "Confirm Password not Match",
     path: ["confirmPassword"],
   });
 
@@ -69,19 +69,19 @@ const RegisterForm = () => {
 
           switch (response.data.message) {
             case "All fields are required":
-              toast.error("Vui lòng điền đầy đủ thông tin.");
+              toast.error("Please enter full information.");
               break;
             case "Invalid email format":
-              toast.error("Email không đúng định dạng.");
+              toast.error("Invalid Email Format.");
               break;
             case "Password and Confirm Password do not match":
-              toast.error("Mật khẩu và xác nhận mật khẩu không khớp.");
+              toast.error("Password and Confirm Password do not match.");
               break;
             case "The email is already in the database":
-              toast.error("Email đã tồn tại.");
+              toast.error("The Email is already Exists.");
               break;
             case "The phone is already in the database":
-              toast.error("Số điện thoại đã tồn tại.");
+              toast.error("The Phone Number is already Exists.");
               break;
             default:
               toast.error(response.data.message);
@@ -90,11 +90,11 @@ const RegisterForm = () => {
           return;
         }
   
-        toast.success("Đăng ký thành công!");
+        toast.success("Sign Up Successfully!");
         navigate("/login");
       }
     } catch (error) {
-      toast.error("Đăng ký thất bại. Vui lòng thử lại!");
+      toast.error("Error Sign Up. Please try again!");
     }
   };
   
@@ -110,7 +110,7 @@ const RegisterForm = () => {
             }`}
             onClick={() => navigate("/login")}
           >
-            Đăng nhập
+            Sign In
           </button>
           <button
             className={`flex-1 py-2 text-base font-semibold rounded-lg transition ${
@@ -118,17 +118,17 @@ const RegisterForm = () => {
             }`}
             onClick={() => setIsLogin(false)}
           >
-            Đăng ký
+            Sign Up
           </button>
         </div>
       </div>
       <div className="w-[400px] p-6  bg-white dark:bg-zinc-800 rounded-lg">
-        <h2 className="text-center text-xl font-semibold text-black dark:text-white">Đăng ký</h2>
+        <h2 className="text-center text-xl font-semibold text-black dark:text-white">Sign Up</h2>
         <FormProvider {...formMethods}>
           <form onSubmit={formMethods.handleSubmit(onSubmit)} className="space-y-3 mt-2">
             <FormItem>
               <FormLabel className="uppercase text-xs font-bold text-zinc-500 dark:text-white">
-                Tên người dùng
+                User's Name
               </FormLabel>
               <Controller
                 name="username"
@@ -141,39 +141,39 @@ const RegisterForm = () => {
               <Controller
                 name="email"
                 control={formMethods.control}
-                render={({ field }) => <Input type="email" placeholder="Nhập email" className="w-full p-3 bg-slate-100 dark:bg-slate-500 text-black border-none dark:text-white focus-visible:ring-0 focus-visible:ring-offset-0" {...field} />}
+                render={({ field }) => <Input type="email" placeholder="Enter Email" className="w-full p-3 bg-slate-100 dark:bg-slate-500 text-black border-none dark:text-white focus-visible:ring-0 focus-visible:ring-offset-0" {...field} />}
               />
             </FormItem>
             <FormItem>
-              <FormLabel className="uppercase text-xs font-bold text-zinc-500 dark:text-white">Số điện thoại</FormLabel>
+              <FormLabel className="uppercase text-xs font-bold text-zinc-500 dark:text-white">Phone Number</FormLabel>
               <Controller
                 name="phone"
                 control={formMethods.control}
-                render={({ field }) => <Input type="text" placeholder="Nhập số điện thoại" className="w-full p-3 bg-slate-100 dark:bg-slate-500 text-black border-none dark:text-white focus-visible:ring-0 focus-visible:ring-offset-0" {...field} />}
+                render={({ field }) => <Input type="text" placeholder="Enter Phone Number" className="w-full p-3 bg-slate-100 dark:bg-slate-500 text-black border-none dark:text-white focus-visible:ring-0 focus-visible:ring-offset-0" {...field} />}
               />
             </FormItem>
             <FormItem>
-              <FormLabel className="uppercase text-xs font-bold text-zinc-500 dark:text-white">Mật khẩu</FormLabel>
+              <FormLabel className="uppercase text-xs font-bold text-zinc-500 dark:text-white">Password</FormLabel>
               <Controller
                 name="password"
                 control={formMethods.control}
-                render={({ field }) => <Input type="password" placeholder="Nhập mật khẩu" className="w-full p-3 bg-slate-100 dark:bg-slate-500 text-black border-none dark:text-white focus-visible:ring-0 focus-visible:ring-offset-0" {...field} />}
+                render={({ field }) => <Input type="password" placeholder="Enter Password" className="w-full p-3 bg-slate-100 dark:bg-slate-500 text-black border-none dark:text-white focus-visible:ring-0 focus-visible:ring-offset-0" {...field} />}
               />
             </FormItem>
             <FormItem>
-              <FormLabel className="uppercase text-xs font-bold text-zinc-500 dark:text-white">Xác nhận mật khẩu</FormLabel>
+              <FormLabel className="uppercase text-xs font-bold text-zinc-500 dark:text-white">Confirm Password</FormLabel>
               <Controller
                 name="confirmPassword"
                 control={formMethods.control}
-                render={({ field }) => <Input type="password" placeholder="Nhập lại mật khẩu" className="w-full p-3 bg-slate-100 dark:bg-slate-500 text-black border-none dark:text-white focus-visible:ring-0 focus-visible:ring-offset-0" {...field} />}
+                render={({ field }) => <Input type="password" placeholder="Enter Confirm Password" className="w-full p-3 bg-slate-100 dark:bg-slate-500 text-black border-none dark:text-white focus-visible:ring-0 focus-visible:ring-offset-0" {...field} />}
               />
             </FormItem>
             <Button type="submit" className="w-full py-3 text-lg bg-black text-white hover:bg-slate-600">
-              Đăng ký
+              Sign Up
             </Button>
             <div className="flex justify-center mt-2">
               <Button onClick={() => navigate("/")} className="w-1/2 py-3 text-lg bg-gray-500 text-white hover:bg-gray-400">
-              Trở về trang chủ
+              Back to Home
               </Button>
             </div>
           </form>

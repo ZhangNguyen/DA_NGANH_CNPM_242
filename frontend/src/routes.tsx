@@ -4,7 +4,7 @@ import {
     HomePage, 
     PublicLayout, 
     DashBoard, 
-    Statistics, 
+    CommandHistoryPage, 
     Login, 
     Register, 
     AuthLayout,
@@ -30,8 +30,8 @@ const routes = [
                         element: <DashBoard/>
                     },
                     {
-                        path: pathnames.public.statistics,
-                        element: <Statistics/>
+                        path: pathnames.public.commandHistory,
+                        element: <CommandHistoryPage/>
                     },
                     {
                         path: pathnames.public.deviceControl,
