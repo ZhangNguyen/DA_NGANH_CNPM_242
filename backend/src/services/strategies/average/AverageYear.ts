@@ -1,58 +1,13 @@
-// // strategies/average/AverageDay.ts
-// import { AverageStrategy } from './AverageStrategy';
-// import Sensor from '../../../models/SensorModel';
-// import User from '../../../models/UserModel';
-// import axios from 'axios';
-
-// export class AverageDay implements AverageStrategy {
-//   async calculate(user: any, type: string) {
-//     const userId = user.id;
-//     const sensors = await Sensor.find({ user: userId, type });
-
-//     if (!sensors || sensors.length === 0) {
-//       return { status: 'error', message: `No sensors found for type ${type}` };
-//     }
-
-//     const { adafruit_username, adafruit_key } = user;
-//     let totalValue = 0, totalRecords = 0;
-
-//     for (const sensor of sensors) {
-//       const feedKey = sensor.feedKey;
-//       const { data } = await axios.get(`https://io.adafruit.com/api/v2/${adafruit_username}/feeds/${feedKey}/data`);
-//       const today = new Date(); today.setHours(0, 0, 0, 0);
-
-//       const todayData = data.filter((record: any) => new Date(record.created_at) >= today);
-//       if (!todayData.length) continue;
-
-//       const sum = todayData.reduce((acc: number, curr: any) => acc + parseFloat(curr.value), 0);
-//       totalValue += sum;
-//       totalRecords += todayData.length;
-//     }
-
-//     if (totalRecords === 0) {
-//       return { status: 'error', message: `No data found today for type ${type}` };
-//     }
-
-//     return {
-//       status: 'success',
-//       message: `Day average for ${type} calculated`,
-//       average: totalValue / totalRecords
-//     };
-//   }
-// }
 // import { AverageStrategy, AverageResult } from './AverageStrategy';
 // import Sensor from '../../../models/SensorModel';
 // import axios from 'axios';
 
-// export class AverageDay implements AverageStrategy {
+// export class AverageYear implements AverageStrategy {
 //   async calculate(user: any, type: string, options?: { date?: Date }): Promise<AverageResult> {
 //     const userId = user.id;
 //     const referenceDate = options?.date || new Date();
-//     const startOfDay = new Date(referenceDate);
-//     startOfDay.setHours(0, 0, 0, 0);
-    
-//     const endOfDay = new Date(referenceDate);
-//     endOfDay.setHours(23, 59, 59, 999);
+//     const startOfYear = new Date(referenceDate.getFullYear(), 0, 1);
+//     const endOfYear = new Date(referenceDate.getFullYear(), 11, 31, 23, 59, 59, 999);
 
 //     const sensors = await Sensor.find({ user: userId, type });
 //     if (!sensors.length) {
@@ -69,15 +24,15 @@
 //           { headers: { 'X-AIO-Key': adafruit_key } }
 //         );
 
-//         const dayData = data.filter((record: any) => {
+//         const yearData = data.filter((record: any) => {
 //           const recordDate = new Date(record.created_at);
-//           return recordDate >= startOfDay && recordDate <= endOfDay;
+//           return recordDate >= startOfYear && recordDate <= endOfYear;
 //         });
 
-//         if (dayData.length) {
-//           const sum = dayData.reduce((acc: number, curr: any) => acc + parseFloat(curr.value), 0);
+//         if (yearData.length) {
+//           const sum = yearData.reduce((acc: number, curr: any) => acc + parseFloat(curr.value), 0);
 //           totalValue += sum;
-//           totalRecords += dayData.length;
+//           totalRecords += yearData.length;
 //         }
 //       } catch (error) {
 //         console.error(`Error fetching data for sensor ${sensor.feedKey}:`, error);
@@ -87,19 +42,20 @@
 //     if (totalRecords === 0) {
 //       return { 
 //         status: 'error', 
-//         message: `No data found for ${referenceDate.toLocaleDateString()} for type ${type}` 
+//         message: `No data found for year ${referenceDate.getFullYear()} for type ${type}` 
 //       };
 //     }
 
 //     return {
 //       status: 'success',
-//       message: `Daily average for ${type}`,
+//       message: `Yearly average for ${type}`,
 //       average: totalValue / totalRecords,
 //       count: totalRecords,
-//       period: `Day: ${referenceDate.toLocaleDateString()}`
+//       period: `Year: ${referenceDate.getFullYear()}`
 //     };
 //   }
 // }
+
 
 import { AverageStrategy, AverageResult } from './AverageStrategy';
 import Sensor from '../../../models/SensorModel';
@@ -112,15 +68,12 @@ interface StatisticData {
   sensorId: string;
 }
 
-export class AverageDay implements AverageStrategy {
+export class AverageYear implements AverageStrategy {
   async calculate(user: any, type: string, options?: { date?: Date }): Promise<AverageResult> {
     const userId = user.id;
     const referenceDate = options?.date || new Date();
-    const startOfDay = new Date(referenceDate);
-    startOfDay.setHours(0, 0, 0, 0);
-    
-    const endOfDay = new Date(referenceDate);
-    endOfDay.setHours(23, 59, 59, 999);
+    const startOfYear = new Date(referenceDate.getFullYear(), 0, 1);
+    const endOfYear = new Date(referenceDate.getFullYear(), 11, 31, 23, 59, 59, 999);
 
     const sensors = await Sensor.find({ user: userId, type });
     if (!sensors.length) {
@@ -138,18 +91,18 @@ export class AverageDay implements AverageStrategy {
           { 
             headers: { 'X-AIO-Key': adafruit_key },
             params: {
-              start_time: startOfDay.toISOString(),
-              end_time: endOfDay.toISOString()
+              start_time: startOfYear.toISOString(),
+              end_time: endOfYear.toISOString()
             }
           }
         );
 
-        const dayData = data.filter((record: any) => {
+        const yearData = data.filter((record: any) => {
           const recordDate = new Date(record.created_at);
-          return recordDate >= startOfDay && recordDate <= endOfDay;
+          return recordDate >= startOfYear && recordDate <= endOfYear;
         });
 
-        dayData.forEach((record: any) => {
+        yearData.forEach((record: any) => {
           detailedData.push({
             timestamp: new Date(record.created_at),
             value: parseFloat(record.value),
@@ -158,10 +111,10 @@ export class AverageDay implements AverageStrategy {
           });
         });
 
-        if (dayData.length) {
-          const sum = dayData.reduce((acc: number, curr: any) => acc + parseFloat(curr.value), 0);
+        if (yearData.length) {
+          const sum = yearData.reduce((acc: number, curr: any) => acc + parseFloat(curr.value), 0);
           totalValue += sum;
-          totalRecords += dayData.length;
+          totalRecords += yearData.length;
         }
       } catch (error) {
         console.error(`Error fetching data for sensor ${sensor.feedKey}:`, error);
@@ -171,16 +124,16 @@ export class AverageDay implements AverageStrategy {
     if (totalRecords === 0) {
       return { 
         status: 'error', 
-        message: `No data found for ${referenceDate.toLocaleDateString()} for type ${type}` 
+        message: `No data found for year ${referenceDate.getFullYear()} for type ${type}` 
       };
     }
 
     return {
       status: 'success',
-      message: `Daily average for ${type}`,
+      message: `Yearly average for ${type}`,
       average: totalValue / totalRecords,
       count: totalRecords,
-      period: `Day: ${referenceDate.toLocaleDateString()}`,
+      period: `Year: ${referenceDate.getFullYear()}`,
       statistics: {
         total: totalValue,
         dataPoints: detailedData.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()),
