@@ -465,6 +465,7 @@ const ManagePlant = () => {
 
 
   const renderDeviceBadges = (plant: Plant) => {
+
   // Hàm kiểm tra thiết bị có hợp lệ để hiển thị không
   const isValidDevice = (device: any): boolean => {
   if (device && typeof device === "object" && device._id != "0") {

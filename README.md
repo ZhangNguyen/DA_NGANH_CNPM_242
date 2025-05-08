@@ -4,4 +4,6 @@ backend: npm run dev
         docker exec -it redis redis-cli
 backend: The next time run :
         docker ps -a 
-        docker start (name)
+        docker start redis
+        docker exec -it redis redis-cli
+        npm run dev (new terminal)

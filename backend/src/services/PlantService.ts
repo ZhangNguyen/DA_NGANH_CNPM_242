@@ -44,9 +44,7 @@ export const createPlant = async (
       ...(soilDeviceId != null && { soilDeviceId }),
     });
 
-    const cacheKey = buildCacheKey('plant', userId, newPlant._id.toString());
-    await setCache(cacheKey, newPlant, TTL);
-
+    await clearUserCache('plant', userId);
     return {
       status: 'success',
       message: 'Plant created successfully',
@@ -152,7 +150,7 @@ export const updatePlant = async (id: string, plantData: any, user: any) => {
       throw new Error('Plant not found or not authorized.');
     }
 
-    await setCache(cacheKey, updatedPlant, TTL);
+    await clearUserCache('plant', userId);
 
     return {
       status: 'success',
@@ -196,7 +194,7 @@ export const deletePlant = async (id: string, user: any) => {
 export const getHistory = async () => {
   try {
       console.log('Fetching history...');
-      const history = await History.find({}).sort({ timeaction: -1 });
+      const history = await History.find({}).sort({ timeaction: -1 }).populate('actiondevice').populate('plantId');
       console.log('Found history:', history);
       return {
           status: 'success',
