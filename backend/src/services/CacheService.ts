@@ -35,7 +35,7 @@ export const clearUserCache = async (prefix: string, userId: string) => {
       const pattern = buildCacheKey(prefix, userId);
       const keys = await redisClient.keys(pattern);
       if (keys.length > 0) {
-        await Promise.all(keys.map((key) => redisClient.del(key)));
+        await redisClient.del(keys);
       }
     } catch (error) {
       console.error("Error clearing user cache:", error);
