@@ -137,8 +137,7 @@ const ManagePlant = () => {
       setLoading(true);
   
       const plantsRes = await apiGetAllPlants();
-      const fetchedPlants = plantsRes.data?.data;
-  
+      const fetchedPlants = plantsRes.data;
       if (Array.isArray(fetchedPlants)) {
         const normalizedPlants = fetchedPlants.map(p => ({
           ...p,
