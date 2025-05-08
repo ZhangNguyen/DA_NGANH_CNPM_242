@@ -64,17 +64,17 @@ const Weather = () => {
     search("Ho Chi Minh") 
   }, [])
   return (
-    <div className='flex flex-col items-center h-full rounded-xl place-self-center p-10 border-2 bg-linear-45 from-slate-300 to-gray-400'>
+    <div className='flex flex-col items-center h-full rounded-xl place-self-center p-10 border-2 bg-linear-45 from-white to-blue-400 shadow-lg'>
       {/* search bar */}
       <div className='flex h-10 items-center gap-2'>
-        <input
-              ref={inputRef}  
-              type="text" 
-              placeholder='Search' 
-              className='outline-0 h-full rounded-2xl pl-6 bg-[#ebfffc]'/>
-        <div className='rounded-full w-full p-2 bg-[#ebfffc] cursor-pointer'>
-          <Search color='gray' onClick={() => inputRef.current && search(inputRef.current.value)}/>
-        </div>
+      <input
+          ref={inputRef}  
+          type="text" 
+          placeholder='Search' 
+          className='outline-0 h-full rounded-2xl pl-6 bg-[#ffffff] text-gray-700'/>
+      <div className='rounded-full w-full p-2 bg-[#ffffff] cursor-pointer shadow-md'>
+        <Search color='gray' onClick={() => inputRef.current && search(inputRef.current.value)}/>
+      </div>
       </div>
       {/* Location, Tempratuer, Weather Main, and Weather Icon */}
       <img src={icon} alt="" className='w-[150px] m-[30px]'/>

@@ -28,17 +28,17 @@ const DashBoard = () => {
     
     try {
       const [tempResponse, humidityResponse, soilResponse, lightResponse] = await Promise.all([
-        apiGetSensorDataByMonth(SensorType.Temperature),
-        apiGetSensorDataByMonth(SensorType.Humidity),
-        apiGetSensorDataByMonth(SensorType.Soil),
-        apiGetSensorDataByMonth(SensorType.Light)
+      apiGetSensorDataByMonth(SensorType.Temperature),
+      apiGetSensorDataByMonth(SensorType.Humidity),
+      apiGetSensorDataByMonth(SensorType.Soil),
+      apiGetSensorDataByMonth(SensorType.Light)
       ]);
       
       setSensorData({
-        temperature: Math.round(tempResponse.data.average * 100) / 100,
-        humidity: Math.round(humidityResponse.data.average * 100) / 100,
-        soil: Math.round(soilResponse.data.average * 100) / 100,
-        light: Math.round(lightResponse.data.average * 100) / 100
+      temperature: isNaN(tempResponse.data.average) ? 0 : Math.round(tempResponse.data.average * 100) / 100,
+      humidity: isNaN(humidityResponse.data.average) ? 0 : Math.round(humidityResponse.data.average * 100) / 100,
+      soil: isNaN(soilResponse.data.average) ? 0 : Math.round(soilResponse.data.average * 100) / 100,
+      light: isNaN(lightResponse.data.average) ? 0 : Math.round(lightResponse.data.average * 100) / 100
       });
     } catch (err) {
       setError("Failed to fetch sensor data. Please try again later.");
@@ -102,19 +102,14 @@ const DashBoard = () => {
             className={`p-5 rounded-xl shadow-sm border ${getSensorCardColor(SensorType.Humidity)} ${isLoading ? "animate-pulse" : ""}`}
           />
           
-          <DashboardCard 
-            title="Soil Moisture" 
-            data={sensorData.soil}
-            icon={<DashboardIcons.Sprout size={40} className="text-green-500" />}
-            className={`p-5 rounded-xl shadow-sm border ${getSensorCardColor(SensorType.Soil)} ${isLoading ? "animate-pulse" : ""}`}
-          />
-          
-          <DashboardCard 
-            title="Light Intensity" 
-            data={sensorData.light}
-            icon={<DashboardIcons.Sun size={40} className="text-yellow-500" />}
-            className={`p-5 rounded-xl shadow-sm border ${getSensorCardColor(SensorType.Light)} ${isLoading ? "animate-pulse" : ""}`}
-          />
+          <div className="md:col-span-2 flex justify-center">
+            <DashboardCard 
+              title="Light Intensity" 
+              data={sensorData.light}
+              icon={<DashboardIcons.Sun size={40} className="text-yellow-500" />}
+              className={`p-5 rounded-xl shadow-sm border ${getSensorCardColor(SensorType.Light)} ${isLoading ? "animate-pulse" : ""} w-full md:w-1/2`}
+            />
+          </div>
         </div>
       </div>
       
