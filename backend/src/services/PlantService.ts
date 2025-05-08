@@ -196,7 +196,7 @@ export const deletePlant = async (id: string, user: any) => {
 export const getHistory = async () => {
   try {
       console.log('Fetching history...');
-      const history = await History.find({}).sort({ timeaction: -1 });
+      const history = await History.find({}).sort({ timeaction: -1 }).populate('actiondevice').populate('plantId');
       console.log('Found history:', history);
       return {
           status: 'success',
