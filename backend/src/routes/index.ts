@@ -7,7 +7,6 @@ import CommandRouter from './CommandRouter';
 import DedicatedRouter from "./DedicatedRouter";
 import SharedRouter from "./SharedDeviceRouter";
 import HistoryRouter from "./HistoryRouter";
-import AverageRouter from "./AverageRouter";
 const routes = (app: Express) => {
   app.use('/api/users', UserRouter);
   app.use('/api/sensors', SensorRouter);
@@ -17,7 +16,6 @@ const routes = (app: Express) => {
   app.use('/api/shared',SharedRouter);
   app.use('/api/history',HistoryRouter);
   app.use('/', AdafruitWebhookRouter);
-  app.use('/api/average',AverageRouter);
 };
 
 export default routes;

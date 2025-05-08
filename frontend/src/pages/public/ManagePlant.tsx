@@ -118,7 +118,7 @@ const ManagePlant = () => {
       await useDeviceStore.getState().fetchAllDevices();
   
       const soilDevices = useDeviceStore.getState().dedicatedDevices.filter(device => device.devicetype ==="soil");
-      const pumpDevices = useDeviceStore.getState().sharedDevices.filter(device => device.devicetype === "pump");
+      const pumpDevices = useDeviceStore.getState().dedicatedDevices.filter(device => device.devicetype === "pump");
       const fanDevice = useDeviceStore.getState().sharedDevices.find(device => device.devicetype === "fan_level") as Fan | null;
       
       setDevices({ soil: soilDevices, pump: pumpDevices, fan: fanDevice });
@@ -413,12 +413,12 @@ const ManagePlant = () => {
   const renderDeviceBadges = (plant: Plant) => {
     return (
       <div className="flex flex-wrap gap-1">
-        {plant.soilDeviceId && plant.soilDeviceId != 0 && plant.soilDeviceId !== 0 &&
+        {plant.soilDeviceId && plant.soilDeviceId != 0 &&
           <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-200">
             {typeof plant.soilDeviceId === "object" && plant.soilDeviceId.name}
           </Badge>
         }
-        {plant.pumpDeviceId && plant.pumpDeviceId != 0 && plant.soilDeviceId !== 0 &&
+        {plant.pumpDeviceId && plant.pumpDeviceId != 0 &&
           <Badge variant="outline" className="bg-blue-50 text-blue-800 border-blue-200">
             {typeof plant.pumpDeviceId === "object" && plant.pumpDeviceId.name}
           </Badge>
