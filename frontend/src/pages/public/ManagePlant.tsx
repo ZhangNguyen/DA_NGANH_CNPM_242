@@ -116,91 +116,146 @@ const ManagePlant = () => {
     try {
       setLoading(true);
       await useDeviceStore.getState().fetchAllDevices();
-  
-      const soilDevices = useDeviceStore.getState().dedicatedDevices.filter(device => device.devicetype ==="soil");
-      const pumpDevices = useDeviceStore.getState().sharedDevices.filter(device => device.devicetype === "pump");
-      const fanDevice = useDeviceStore.getState().sharedDevices.find(device => device.devicetype === "fan_level") as Fan | null;
+      
+      const soilDevices = useDeviceStore.getState().dedicatedDevices.filter(device => device.devicetype === "soil");
+      const pumpDevices = useDeviceStore.getState().dedicatedDevices.filter(device => device.devicetype === "pump");
+      const fanDevice = useDeviceStore.getState().dedicatedDevices.find(device => device.devicetype === "fan_level") as Fan | null;
       
       setDevices({ soil: soilDevices, pump: pumpDevices, fan: fanDevice });
+      return { soil: soilDevices, pump: pumpDevices, fan: fanDevice };
     } catch (error: any) {
       console.error("Lỗi khi lấy thiết bị dedicated:", error);
       toast.error("Không thể lấy dữ liệu thiết bị.");
+      return null;
     } finally {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
   
-        const plantsRes = await apiGetAllPlants();
-        const fetchedPlants = plantsRes.data?.data;
+  const fetchPlant = async () => {
+    try {
+      setLoading(true);
   
-        if (Array.isArray(fetchedPlants)) {
-          const normalizedPlants = fetchedPlants.map(p => ({
-            ...p,
-            id: p._id,
-            updatedAt: new Date(p.updatedAt).toLocaleString('vi-VN', {
-              timeZone: 'Asia/Ho_Chi_Minh',
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit',
-            }),
-            devices: {
-              pump: p.pumpDeviceId,
-              soil: p.soilDeviceId,
-            }
-          }));
-          setPlants(normalizedPlants);
-        } else {
-          console.error("Error Data from API:", plantsRes);
-          toast.error("Error Data");
-        }
+      const plantsRes = await apiGetAllPlants();
+      const fetchedPlants = plantsRes.data?.data;
   
-        // Fetch device sau
-        await fetchDevices();
-        
-      } catch (error: any) {
-        console.error("Error Detail: ", error);
+      if (Array.isArray(fetchedPlants)) {
+        const normalizedPlants = fetchedPlants.map(p => ({
+          ...p,
+          id: p._id,
+          updatedAt: new Date(p.updatedAt).toLocaleString('vi-VN', {
+            timeZone: 'Asia/Ho_Chi_Minh',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+          }),
+          devices: {
+            pump: p.pumpDeviceId,
+            soil: p.soilDeviceId,
+          }
+        }));
+        setPlants(normalizedPlants);
+        return normalizedPlants;
+      } else {
+        console.error("Error Data from API:", plantsRes);
         toast.error("Error Data");
-      } finally {
-        setLoading(false);
+        return null;
       }
-    };
-
+    } catch (error: any) {
+      console.error("Error Detail: ", error);
+      toast.error("Error Data");
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const findUsedDevices = (fetchedPlants: any[], fetchedDevices: { soil: any[], pump: any[] }) => {
+    if (!fetchedPlants || !fetchedDevices) return;
+    
+    // Lấy tất cả ID thiết bị soil và pump được sử dụng trong plants
+    const usedSoilIds = fetchedPlants
+      .map(plant => plant.soilDeviceId?._id || plant.soilDeviceId)
+      .filter(id => !!id);
+      
+    const usedPumpIds = fetchedPlants
+      .map(plant => plant.pumpDeviceId?._id || plant.pumpDeviceId)
+      .filter(id => !!id);
+    
+    // Tìm thiết bị tương ứng với ID trong danh sách thiết bị đã fetch
+    const usedSoilDevices = fetchedDevices.soil.filter(device => 
+      usedSoilIds.includes(device._id || device.id)
+    );
+    
+    const usedPumpDevices = fetchedDevices.pump.filter(device => 
+      usedPumpIds.includes(device._id || device.id)
+    );
+    
+    console.log("Used soil devices:", usedSoilDevices);
+    console.log("Used pump devices:", usedPumpDevices);
+    
+    setUsedSoilDevices(usedSoilDevices);
+    setUsedPumpDevices(usedPumpDevices);
+  };
+  
+  useEffect(() => {
     const onPlantStatusUpdate = (data: PlantStatusData) => {
       console.log("Plant status update:", data);
       setPlantStatus(data);
-      window.location.reload();
     };
     socket.on("plant-status-update", onPlantStatusUpdate);
   
-    fetchData();
-
+    const fetchAllData = async () => {
+      setLoading(true);
+      
+      // Fetch cả plants và devices song song để tối ưu thời gian
+      const [fetchedPlants, fetchedDevices] = await Promise.all([
+        fetchPlant(),
+        fetchDevices()
+      ]);
+      
+      // Chỉ xử lý sau khi cả hai quá trình fetch hoàn tất
+      if (fetchedPlants && fetchedDevices) {
+        findUsedDevices(fetchedPlants, fetchedDevices);
+      }
+      
+      setLoading(false);
+    };
+    
+    fetchAllData();
+  
     return () => {
       socket.off("plant-status-update", onPlantStatusUpdate);
     };
   }, []);
 
-  useEffect(() => {
-    if (plants.length > 0 && devices?.soil?.length > 0 && devices?.pump?.length > 0) {
-      const usedSoilDevices = plants
-        .map(p => p.soilDeviceId)
-        .filter((device): device is Device => typeof device === 'object' && device !== null);
-  
-      const usedPumpDevices = plants
-        .map(p => p.pumpDeviceId)
-        .filter((device): device is Device => typeof device === 'object' && device !== null);
-  
-      setUsedSoilDevices(usedSoilDevices);
-      setUsedPumpDevices(usedPumpDevices);
+  const refreshData = async () => {
+    setLoading(true);
+    try {
+      // Làm mới cả plants và devices
+      const [fetchedPlants, fetchedDevices] = await Promise.all([
+        fetchPlant(),
+        fetchDevices()
+      ]);
+      
+      // Xử lý lại thiết bị đang sử dụng
+      if (fetchedPlants && fetchedDevices) {
+        findUsedDevices(fetchedPlants, fetchedDevices);
+      }
+    } catch (error) {
+      console.error("Lỗi khi làm mới dữ liệu:", error);
+      toast.error("Không thể cập nhật dữ liệu mới nhất");
+    } finally {
+      setLoading(false);
     }
-  }, [plants, devices]);
+  };
+  
+  // Không cần useEffect theo dõi plants nữa vì chúng ta đã xử lý sau khi fetch
+
+
   
   const availableSoilDevices = devices.soil.filter(device => 
     !usedSoilDevices.some(used => used._id === device._id) ||
@@ -322,7 +377,8 @@ const ManagePlant = () => {
       if (response) {
         // Add new plant to local 
         
-        window.location.reload();
+        fetchPlant(); // Fetch updated data
+        fetchDevices(); // Fetch updated devices
         toast.success("Plant has been added successfully");
         // Reset form
         setNewPlant({ 
@@ -351,7 +407,7 @@ const ManagePlant = () => {
       
       // Remove from local state
       setPlants(plants.filter(plant => plant.id !== id));
-      window.location.reload();
+      fetchPlant(); // Fetch updated data
       toast.success("Plant has been deleted successfully");
       
       // Adjust current page if necessary
@@ -377,11 +433,7 @@ const ManagePlant = () => {
       
       
       if (response.data) {
-        // Update in local state
-        setPlants(plants.map(plant => 
-          plant.id === editingPlant.id ? response.data : plant
-        ));
-        window.location.reload();
+        refreshData(); // Fetch updated data
         toast.success("Plant has been updated successfully");
       }
       
@@ -410,22 +462,71 @@ const ManagePlant = () => {
         return <Fan className="h-4 w-4" />;   
     }
   };
+
+
   const renderDeviceBadges = (plant: Plant) => {
-    return (
-      <div className="flex flex-wrap gap-1">
-        {plant.soilDeviceId && plant.soilDeviceId != 0 && plant.soilDeviceId !== 0 &&
-          <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-200">
-            {typeof plant.soilDeviceId === "object" && plant.soilDeviceId.name}
-          </Badge>
-        }
-        {plant.pumpDeviceId && plant.pumpDeviceId != 0 && plant.soilDeviceId !== 0 &&
-          <Badge variant="outline" className="bg-blue-50 text-blue-800 border-blue-200">
-            {typeof plant.pumpDeviceId === "object" && plant.pumpDeviceId.name}
-          </Badge>
-        }
-      </div>
-    );
+  // Hàm kiểm tra thiết bị có hợp lệ để hiển thị không
+  const isValidDevice = (device: any): boolean => {
+  if (device && typeof device === "object" && device._id != "0") {
+    return !!device.name && device.name !== "0" && device.name.trim() !== "";
+  }
+  // Nếu chỉ là ID dạng number, vẫn cho phép hiển thị
+  if (typeof device === "number" && device !== 0) {
+    return true;
+  }
+  return false;
+};
+
+
+const getDeviceName = (device: any): string => {
+  if (typeof device === "object" && device !== null && device._id != "0") {
+    return device.name || "Unknown";
+  }
+  if (typeof device === "number") {
+    return `Device id: ${device}`;
+  }
+  return "Unknown";
+};
+
+
+  // Hàm để lấy key duy nhất cho mỗi badge
+  const getDeviceKey = (deviceType: string, device: any): string => {
+    try {
+      if (typeof device === "object" && device !== null) {
+        return `${deviceType}-${device._id || device.id || Date.now()}`;
+      }
+      return `${deviceType}-${Date.now()}`;
+    } catch (error) {
+      return `${deviceType}-${Date.now()}-${Math.random()}`;
+    }
   };
+
+  return (
+    <div className="flex flex-wrap gap-1">
+      {/* Soil Device Badge */}
+      {isValidDevice(plant.soilDeviceId) && (
+        <Badge 
+          variant="outline" 
+          className="bg-amber-50 text-amber-800 border-amber-200"
+          key={getDeviceKey("soil", plant.soilDeviceId)}
+        >
+          {getDeviceName(plant.soilDeviceId)}
+        </Badge>
+      )}
+      
+      {/* Pump Device Badge */}
+      {isValidDevice(plant.pumpDeviceId) && (
+        <Badge 
+          variant="outline" 
+          className="bg-blue-50 text-blue-800 border-blue-200"
+          key={getDeviceKey("pump", plant.pumpDeviceId)}
+        >
+          {getDeviceName(plant.pumpDeviceId)}
+        </Badge>
+      )}
+    </div>
+  );
+};
 
   async function toggleWatering(plant: Plant | null) {
     if (!plant) return;
