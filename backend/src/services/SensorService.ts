@@ -9,8 +9,6 @@ import {
   setCache,
   getCache,
   buildCacheKey,
-  clearUserCache,
-  getAllCache,
   deleteCache
 } from '../services/CacheService';const TTL = 250; 
 const fetchFeedListFromAdafruit = async (adafruitUsername: string, adafruitKey: string) => {

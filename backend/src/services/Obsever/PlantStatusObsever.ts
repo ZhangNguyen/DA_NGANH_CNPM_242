@@ -2,14 +2,14 @@ import { SensorObserver } from "./SensorObsever";
 import Plant from "../../models/PlantModel";
 import DedicatedDevice from "../../models/DedicatedDevice";
 import { SensorSubject } from "./SensorSubject";
-import { getAllCache, buildCacheKey, setCache } from "../CacheService";
+import { getCache, getTTL, buildCacheKey, setCache } from "../CacheService";
 import Sensor from "../../models/SensorModel";
 import { io } from "../../config/socket";
 
 export class PlantStatusObserver implements SensorObserver {
   public async updateLimit(object: any, userID: string, plantID: string) {
     const cacheKey = buildCacheKey('sensor', userID);
-    let sensorList = await getAllCache(cacheKey) ?? [];
+    let sensorList = await getCache(cacheKey) ?? [];
 
     if (sensorList.length === 0) {
       sensorList = await Sensor.find({ user: userID });
@@ -53,19 +53,15 @@ export class PlantStatusObserver implements SensorObserver {
   private isSameArrayUnordered(a: string[], b: string[]): boolean {
     if (!Array.isArray(a) || !Array.isArray(b)) return false;
     if (a.length !== b.length) return false;
-
     const sortedA = [...a].sort();
     const sortedB = [...b].sort();
-
     return sortedA.every((val, index) => val === sortedB[index]);
   }
 
   async update(object: any): Promise<void> {
     const userId = object.user;
-    const TTL = 250;
-    const changedPlants: any[] = [];
-    const plantCacheKey = buildCacheKey('plant', userId);
-    let plants = await getAllCache(plantCacheKey) ?? [];
+    const listKey = buildCacheKey('plant', userId);
+    let plants = await getCache(listKey) ?? [];
 
     if (!plants || plants.length === 0) {
       plants = await Plant.find({ userId })
@@ -73,14 +69,19 @@ export class PlantStatusObserver implements SensorObserver {
         .populate('soilDeviceId');
     }
 
-    await Promise.all(plants.map(async (plant) => {
+    const ttl = await getTTL(listKey);
+    const changedPlants: any[] = [];
+    const updatedList = [...plants];
+
+    for (let i = 0; i < plants.length; i++) {
+      const plant = plants[i];
       const actions: string[] = [];
       const dataLimit = await this.updateLimit(object, userId, plant._id);
       const { temperature, humidity, light, soil } = dataLimit;
 
       if (temperature == null || humidity == null || light == null || soil == null) {
         console.warn(`⚠️ Thiếu sensor dữ liệu cho plant ${plant._id}`);
-        return;
+        continue;
       }
 
       const getScore = (val: number, ranges: [number, number, number][]) => {
@@ -98,13 +99,8 @@ export class PlantStatusObserver implements SensorObserver {
 
       const wateringScore = tempScore + lightScore + soilScore + humidityScore;
 
-      if (wateringScore > (plant.limitWatering ?? 60)) {
-        actions.push("TUOI NUOC");
-      }
-
-      if (fanScore > (plant.limitTemp ?? 20)) {
-        actions.push("BAT QUAT");
-      }
+      if (wateringScore > (plant.limitWatering ?? 60)) actions.push("TUOI NUOC");
+      if (fanScore > (plant.limitTemp ?? 20)) actions.push("BAT QUAT");
 
       let arr_status: string[] = [];
       if (actions.includes("TUOI NUOC")) arr_status.push("watering");
@@ -117,17 +113,26 @@ export class PlantStatusObserver implements SensorObserver {
           status: arr_status,
           updateAt: new Date(),
         };
-        changedPlants.push(updated);
-        const singlePlantKey = buildCacheKey('plant', userId, plant._id.toString());
-        const plantData = typeof plant.toObject === 'function' ? plant.toObject() : plant;
-        setCache(singlePlantKey, { ...plantData, status: arr_status }, TTL);
+        changedPlants.push({ index: i, updated, status: arr_status });
+
         await Plant.findByIdAndUpdate(plant._id, { status: arr_status });
+
+        // ✅ Update cache byId
+        const byIdKey = buildCacheKey('plant', userId, plant._id.toString());
+        await setCache(byIdKey, { ...plant, status: arr_status }, 250);
       }
-    }));
-    console.log(changedPlants);
+    }
 
     if (changedPlants.length > 0) {
-      io.to(userId.toString()).emit("plant-status-update", changedPlants);
+      for (const { index, status } of changedPlants) {
+        updatedList[index] = { ...updatedList[index], status };
+      }
+
+      if (ttl) {
+        await setCache(listKey, updatedList, ttl);
+      }
+
+      io.to(userId.toString()).emit("plant-status-update", changedPlants.map(p => p.updated));
     }
   }
 }

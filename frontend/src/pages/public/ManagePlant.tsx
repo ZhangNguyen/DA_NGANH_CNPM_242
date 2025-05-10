@@ -137,7 +137,8 @@ const ManagePlant = () => {
       setLoading(true);
   
       const plantsRes = await apiGetAllPlants();
-      const fetchedPlants = plantsRes.data;
+      const fetchedPlants = plantsRes.data.data;
+      console.log("Fetched plants:", fetchedPlants);
       if (Array.isArray(fetchedPlants)) {
         const normalizedPlants = fetchedPlants.map(p => ({
           ...p,
@@ -225,11 +226,11 @@ const ManagePlant = () => {
     };
     
     fetchAllData();
-  
+    // refreshData();
     return () => {
       socket.off("plant-status-update", onPlantStatusUpdate);
     };
-  }, []);
+  }, [plantStatus]);
 
   const refreshData = async () => {
     setLoading(true);
