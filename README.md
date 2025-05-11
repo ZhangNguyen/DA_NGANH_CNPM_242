@@ -7,8 +7,8 @@ Dự án web giám sát và điều khiển vườn bằng thiết bị IOT sử
 
 ```bash
 cd frontend
-npm install
-npm start
+yarn install
+yarn start
 # First time:
 docker run -d --name redis -p 6379:6379 redis
 docker exec -it redis redis-cli
