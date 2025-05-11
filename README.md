@@ -1,7 +1,7 @@
 
 # SMART GARDEN WEB APP
 
-Dự án web giám sát và điều khiển vườn thông minh sử dụng React (frontend), Node.js + Express (backend), Redis và webhook từ Adafruit IO qua ngrok.
+Dự án web giám sát và điều khiển vườn bằng thiết bị IOT sử dụng React (frontend), Node.js + Express (backend), Redis và webhook từ Adafruit IO qua ngrok.
 
 ## Cách chạy dự án
 
