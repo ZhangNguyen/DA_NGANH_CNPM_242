@@ -21,4 +21,5 @@ npm install
 npm run dev
 # Run ngrok
 ngrok http 3000
-Copy and past link ngrok into adafruit
+---
+Copy and paste link ngrok into adafruit
